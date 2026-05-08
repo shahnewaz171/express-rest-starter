@@ -1,0 +1,148 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.4.14/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "includes": ["**/*.ts", "**/*.js", "**/*.json", "**/*.mts"],
+    "ignoreUnknown": true
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100,
+    "lineEnding": "auto"
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "trailingCommas": "none",
+      "semicolons": "always",
+      "arrowParentheses": "always",
+      "bracketSpacing": true
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "correctness": {
+        "noUndeclaredDependencies": "off",
+        "noUnusedImports": "error",
+        "noUnusedVariables": "error",
+        "useParseIntRadix": "error",
+        "noUnusedLabels": "error",
+        "noUnreachable": "error",
+        "noUndeclaredVariables": "off",
+        "noUnresolvedImports": "off"
+      },
+      "style": {
+        "useConst": "error",
+        "useTemplate": "error",
+        "useShorthandFunctionType": "error",
+        "noNonNullAssertion": "warn",
+        "noParameterAssign": "error",
+        "useNumberNamespace": "error",
+        "useExponentiationOperator": "error",
+        "noNestedTernary": "error",
+        "useSingleVarDeclarator": "error",
+        "noUnusedTemplateLiteral": "error",
+        "noUselessElse": "error",
+        "useDefaultParameterLast": "error",
+        "useExplicitLengthCheck": "error",
+        "useNamingConvention": "off",
+        "noYodaExpression": "error",
+        "useSymbolDescription": "error",
+        "useConsistentObjectDefinitions": "error",
+        "noNegationElse": "error",
+        "useCollapsedElseIf": "error",
+        "useArrayLiterals": "error",
+        "useDefaultSwitchClause": "error",
+        "useConsistentArrowReturn": "error"
+      },
+      "suspicious": {
+        "noDoubleEquals": "error",
+        "noExplicitAny": "warn",
+        "noConsole": "off",
+        "noEmptyBlockStatements": "error",
+        "noRedeclare": "error",
+        "useAwait": "error",
+        "noConfusingVoidType": "error",
+        "noWith": "error",
+        "noVar": "error",
+        "noPrototypeBuiltins": "error",
+        "useGuardForIn": "error",
+        "useDefaultSwitchClauseLast": "error",
+        "noDuplicateAtImportRules": "error",
+        "useIterableCallbackReturn": "error",
+        "noIrregularWhitespace": "error",
+        "noUselessEscapeInString": "error",
+        "noUnusedExpressions": "error",
+        "noImportCycles": "error"
+      },
+      "complexity": {
+        "noForEach": "off",
+        "noBannedTypes": "error",
+        "noUselessRename": "error",
+        "useLiteralKeys": "error",
+        "useOptionalChain": "error",
+        "noUselessTernary": "error",
+        "noUselessSwitchCase": "error",
+        "useArrowFunction": "error",
+        "noArguments": "error",
+        "useNumericLiterals": "error",
+        "noAdjacentSpacesInRegex": "error",
+        "noExtraBooleanCast": "error",
+        "noVoid": "error",
+        "noExcessiveLinesPerFunction": {
+          "level": "error",
+          "options": {
+            "maxLines": 200,
+            "skipBlankLines": true
+          }
+        },
+        "useMaxParams": {
+          "level": "error",
+          "options": {
+            "max": 4
+          }
+        }
+      },
+      "nursery": {
+        "noProto": "error",
+        "noTernary": "off",
+        "noShadow": "error",
+        "noIncrementDecrement": "error",
+        "noContinue": "error",
+        "noFloatingPromises": "error"
+      }
+    }
+  },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": {
+          "level": "on",
+          "options": {
+            "groups": [
+              [":URL:", ":NODE:", ":BUN:", ":PACKAGE_WITH_PROTOCOL:", ":PACKAGE:"],
+              ":BLANK_LINE:",
+              ["**/utils/**"],
+              ":BLANK_LINE:",
+              ["**/middlewares/**"],
+              ":BLANK_LINE:",
+              ["**/modules/**"],
+              ":BLANK_LINE:",
+              ["@/**", ":ALIAS:", "src/**"],
+              ":BLANK_LINE:",
+              ["../**", "./**"]
+            ]
+          }
+        }
+      }
+    }
+  }
+}
