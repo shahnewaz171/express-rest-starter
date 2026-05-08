@@ -14,7 +14,9 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
-    "format:check": "biome format ."
+    "format:check": "biome format .",
+    "lint-staged": "lint-staged",
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "",
