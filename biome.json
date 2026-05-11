@@ -136,6 +136,10 @@
               ":BLANK_LINE:",
               ["**/modules/**"],
               ":BLANK_LINE:",
+              ["**/routes"],
+              ":BLANK_LINE:",
+              ["**/db", "**/db/**"],
+              ":BLANK_LINE:",
               ["@/**", ":ALIAS:", "src/**"],
               ":BLANK_LINE:",
               ["../**", "./**"]

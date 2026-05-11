@@ -7,8 +7,8 @@
 
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
+    "module": "esnext",
+    "moduleResolution": "bundler",
     "target": "esnext",
     // "types": [],
     // For nodejs:
@@ -41,9 +41,14 @@
     "moduleDetection": "force",
     "skipLibCheck": true,
 
+    // Allow importing JSON files as modules
+    "resolveJsonModule": true,
+
     /* Path Aliases */
     "paths": {
       "@/*": ["./*"]
+      // "$/*": ["./*"]
     }
-  }
+  },
+  "include": ["src/**/*"]
 }

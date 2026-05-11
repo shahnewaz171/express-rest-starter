@@ -1,7 +1,7 @@
 import { Router } from 'express';
 
 // Routers
-import { docRouter } from '@/src/modules/routers.js';
+import { docRouter } from '@/src/modules/routers';
 
 const router: ReturnType<typeof Router> = Router();
 

@@ -1,0 +1,26 @@
+[
+  {
+    "email": "admin@system.com",
+    "first_name": "Admin",
+    "last_name": "Root",
+    "password": "123456aA@",
+    "roles": [{ "name": "admin" }, { "name": "user" }],
+    "status": "active"
+  },
+  {
+    "email": "test1@user.com",
+    "first_name": "John",
+    "last_name": "Doe",
+    "password": "123456aA@",
+    "roles": [{ "name": "user" }],
+    "status": "active"
+  },
+  {
+    "email": "test2@user.com",
+    "first_name": "Jane",
+    "last_name": "Smith",
+    "password": "123456aA@",
+    "roles": [{ "name": "user" }],
+    "status": "active"
+  }
+]
