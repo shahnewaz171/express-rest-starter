@@ -2,7 +2,7 @@ import { getTableName, sql, type Table } from 'drizzle-orm';
 
 import { DB_SEEDING } from '@/src/utils/env';
 
-import { client, type DB, db } from '@/src/db';
+import { type DB, db, pool } from '@/src/db';
 import * as schema from '@/src/db/schema';
 import * as seeds from '@/src/db/seeds';
 
@@ -16,24 +16,34 @@ async function resetTables(database: DB, tables: Table[]) {
   await database.execute(sql.raw(`TRUNCATE TABLE ${tableNames} RESTART IDENTITY CASCADE`));
 }
 
-// Start the database seeding and reset tables before seeding
 const startDBSeeding = async () => {
   try {
     console.log('Starting database seeding...');
 
-    // Reset all tables before seeding
-    await resetTables(db, [schema.user]);
+    // Reset tables in the correct order to avoid foreign key constraint issues. Remember to adjust the order (child tables first) to remove relationships.
+    await resetTables(db, [
+      schema.authTemplate,
+      schema.authToken,
+      schema.verificationToken,
+      schema.rolePermission,
+      schema.roleUser,
+      schema.permission,
+      schema.role,
+      schema.user
+    ]);
 
-    // Start database seeding
-    await seeds.user(db);
+    await seeds.authTemplate(db);
+    const roles = await seeds.role(db);
+    await seeds.permission(db);
+    await seeds.rolePermission(db);
+    await seeds.user(db, roles);
 
     console.log('Database seeding completed');
   } catch (error) {
     console.error('Database seeding failed:', error);
     process.exit();
   } finally {
-    // Close the database connection after seeding
-    await client.end();
+    await pool.end();
   }
 };
 

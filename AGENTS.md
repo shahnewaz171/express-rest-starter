@@ -50,7 +50,7 @@
 
 ## Validation
 - Validate all external input
-- Use zod for schema validation
+- Use Zod for schema validation and follow the file naming convention: `name.validation.ts`
 - Validate environment variables at startup
 
 ## Database

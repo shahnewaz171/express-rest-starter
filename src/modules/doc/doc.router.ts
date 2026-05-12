@@ -8,14 +8,20 @@ const swaggerSpec = swaggerJsdoc({
     info: {
       title: 'Express.js with PostgreSQL API',
       version: '1.0.0',
-      description: 'A simple Express.js API application with PostgreSQL database.'
+      description: 'Enterprise SaaS Boilerplate API with authentication and RBAC.'
     },
     servers: [{ url: 'http://localhost:8000' }],
     components: {
-      securitySchemes: { tokenAuth: { in: 'header', name: 'Authorization', type: 'apiKey' } }
+      securitySchemes: {
+        tokenAuth: {
+          type: 'apiKey',
+          in: 'header',
+          name: 'Authorization'
+        }
+      }
     }
   },
-  apis: ['../routers.ts', './docs.schema.ts']
+  apis: ['./src/modules/**/*.router.ts', './src/modules/doc/doc.schema.ts']
 });
 
 const docRouter: ReturnType<typeof Router> = Router();

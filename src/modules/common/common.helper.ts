@@ -1,23 +1,15 @@
-import {
-  find,
-  forEach,
-  isBoolean,
-  isEmpty,
-  isFinite as isFiniteNumber,
-  isNumber,
-  join,
-  map,
-  omit,
-  size
-} from 'lodash';
+import { find, isFinite as isFiniteNumber } from 'lodash-es';
 import validator from 'validator';
-
-// Utils
-import { CustomError } from '@/src/utils/error';
 
 import type { QueryOptions, ValidateUserPermissionParams } from '@/src/modules/common/common.type';
 
-export const getCommonOptions = () => ({ limit: 50, offset: 0, order: [['created_at', 'desc']] });
+export const getCommonOptions = () => ({
+  limit: 50,
+  offset: 0,
+  order: [['created_at', 'desc']]
+});
+
+export const getFirstLetterUpperCase = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
 
 export const getOptionsFromQuery = (query: QueryOptions) => {
   const limit = Number(query.limit);
@@ -26,7 +18,7 @@ export const getOptionsFromQuery = (query: QueryOptions) => {
   return {
     limit: isFiniteNumber(limit) ? limit : 50,
     offset: isFiniteNumber(offset) ? offset : 0,
-    order: query.order ? JSON.parse(query.order) : [['created_at', 'desc']]
+    order: query.order ? JSON.parse(query.order as string) : [['created_at', 'desc']]
   };
 };
 
@@ -44,55 +36,9 @@ export const getRandomNumber = (length: number) => {
 
 export const getRandomString = () => crypto.randomUUID();
 
-export const validateDomain = (domain = '') => validator.isFQDN(domain);
+export const validateDomain = (domain: string) => validator.isFQDN(domain);
 
 export const validateEmail = (email = '') => validator.isEmail(email);
-
-export const validateProps = (fields = [], body = {}) => {
-  const notAllowedFields: string[] = Object.keys(omit(body, map(fields, 'field')));
-  if (size(notAllowedFields)) {
-    throw new Error(`${join(notAllowedFields, '_AND_')?.toUpperCase?.()}_NOT_ALLOWED`);
-  }
-
-  const invalidFields: string[] = [];
-  const missingFields: string[] = [];
-  forEach(fields, ({ field, required, type }) => {
-    if (typeof body[field] !== 'undefined' && typeof body[field] !== type) {
-      invalidFields.push(field);
-    }
-    if (required && !isBoolean(body[field]) && isEmpty(body[field])) {
-      missingFields.push(field);
-    }
-  });
-
-  if (size(invalidFields)) {
-    throw new Error(`INVALID_TYPE_OF_${join(invalidFields, '_AND_')?.toUpperCase?.()}`);
-  }
-  if (size(missingFields)) {
-    throw new Error(`MISSING_${join(missingFields, '_AND_')?.toUpperCase?.()}`);
-  }
-};
-
-export const validateRequiredProps = (
-  requiredFields: string[] = [],
-  body: Record<string, unknown> = {}
-) => {
-  const missingFields: string[] = [];
-
-  for (let i = 0; i < requiredFields?.length; i += 1) {
-    const field = requiredFields[i];
-
-    if (field && isEmpty(body[field]) && !isNumber(body[field]) && !isBoolean(body[field])) {
-      missingFields.push(field);
-    }
-  }
-
-  if (size(missingFields)) {
-    throw new CustomError(400, `MISSING_${join(missingFields, '_AND_')?.toUpperCase?.()}`);
-  }
-};
-
-export const validateURL = (input = '') => validator.isURL(input);
 
 export const validateUUID = (uuid = '') => validator.isUUID(uuid);
 
@@ -106,6 +52,8 @@ export const validatePassword = (password: string) =>
   });
 
 export const validatePhoneNumber = (phoneNumber: string) => validator.isMobilePhone(phoneNumber);
+
+export const validateURL = (input: string) => validator.isURL(input);
 
 export const validateUserPermission = ({
   action,

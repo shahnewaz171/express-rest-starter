@@ -1,0 +1,152 @@
+import dayjs from 'dayjs';
+import { and, eq, type SQL } from 'drizzle-orm';
+
+import { commonHelper, userHelper } from '@/src/modules/helpers';
+import * as notificationService from '@/src/modules/notification/notification.service';
+import type { NewVerificationToken } from '@/src/modules/verification-token/verification-token.schema';
+import { verificationToken } from '@/src/modules/verification-token/verification-token.schema';
+import type {
+  CreateVerificationTokenInput,
+  ValidateVerificationTokenInput
+} from '@/src/modules/verification-token/verification-token.type';
+
+import type { DB } from '@/src/db';
+import { db } from '@/src/db';
+
+export const createAVerificationToken = async (data: NewVerificationToken, tx?: DB) => {
+  const executor = tx ?? db;
+
+  const [created] = await executor.insert(verificationToken).values(data).returning();
+
+  return created;
+};
+
+export const updateAVerificationToken = async (
+  id: string,
+  data: Partial<NewVerificationToken>,
+  tx?: DB
+) => {
+  const executor = tx ?? db;
+
+  const [updated] = await executor
+    .update(verificationToken)
+    .set(data)
+    .where(eq(verificationToken.id, id))
+    .returning();
+
+  return updated;
+};
+
+export const updateVerificationTokens = async (
+  where: SQL,
+  data: Partial<NewVerificationToken>,
+  tx?: DB
+) => {
+  const executor = tx ?? db;
+
+  const results = await executor.update(verificationToken).set(data).where(where).returning();
+
+  return results;
+};
+
+export const deleteAVerificationToken = async (id: string, tx?: DB) => {
+  const executor = tx ?? db;
+
+  const [deleted] = await executor
+    .delete(verificationToken)
+    .where(eq(verificationToken.id, id))
+    .returning();
+
+  return deleted;
+};
+
+export const deleteVerificationTokens = async (where: SQL, tx?: DB) => {
+  const executor = tx ?? db;
+
+  const results = await executor.delete(verificationToken).where(where).returning();
+
+  return results;
+};
+
+export const createAVerificationTokenForUser = async (
+  params: CreateVerificationTokenInput,
+  tx?: DB
+) => {
+  const { email, first_name, last_name, type, user_id } = params;
+
+  const token = commonHelper.getRandomNumber(6);
+
+  const created = await createAVerificationToken({ email, token, type, user_id }, tx);
+
+  if (!created) {
+    throw new Error('FAILED_TO_CREATE_VERIFICATION_TOKEN');
+  }
+
+  const event =
+    type === 'forgot_password' ? 'send_forgot_password_token' : 'send_user_verification_token';
+
+  await notificationService.sendNotification({
+    event,
+    to_email: email,
+    variables: {
+      email,
+      token: created.token,
+      url: process.env.CLIENT_APP_URL || '',
+      username: userHelper.getUsernameByNames(email, first_name, last_name)
+    }
+  });
+
+  return created;
+};
+
+export const validateVerificationTokenForUser = async (
+  params: ValidateVerificationTokenInput,
+  tx?: DB
+) => {
+  const { email, token, type, user_id } = params;
+
+  const conditions: SQL[] = [
+    eq(verificationToken.token, token),
+    eq(verificationToken.type, type),
+    eq(verificationToken.status, 'unverified')
+  ];
+
+  if (email) {
+    conditions.push(eq(verificationToken.email, email));
+  }
+
+  if (user_id) {
+    conditions.push(eq(verificationToken.user_id, user_id));
+  }
+
+  const where = and(...conditions) as SQL;
+
+  const executor = tx ?? db;
+
+  const existingToken = await executor.query.verificationToken.findFirst({ where });
+
+  if (!existingToken) {
+    throw new Error('OTP_IS_NOT_VALID');
+  }
+
+  if (dayjs(existingToken.expired_at).isBefore(dayjs())) {
+    throw new Error('OTP_IS_EXPIRED');
+  }
+
+  const deleteConditions: SQL[] = [
+    eq(verificationToken.token, token),
+    eq(verificationToken.type, type)
+  ];
+
+  if (email) {
+    deleteConditions.push(eq(verificationToken.email, email));
+  }
+
+  if (user_id) {
+    deleteConditions.push(eq(verificationToken.user_id, user_id));
+  }
+
+  await deleteVerificationTokens(and(...deleteConditions) as SQL, tx);
+
+  return existingToken;
+};

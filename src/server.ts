@@ -18,6 +18,11 @@ const app = express();
 
 // Using CORS for cross site origin issue
 app.use(cors({ origin: '*' }));
+// app.use((_req, res, next) => {
+//   res.setHeader('Access-Control-Allow-Headers', '*');
+//   res.setHeader('Access-Control-Allow-Methods', '*');
+//   next();
+// });
 
 // Using JSON for parsing request body
 app.use(express.json());
@@ -51,3 +56,5 @@ connectToPostgresDB()
   .catch((err) => {
     console.error('server', 'Something went wrong, error:', err);
   });
+
+export default server;
