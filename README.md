@@ -1,79 +1,159 @@
-# Express Auth Boilerplate
+# Express Auth Starter
 
-A modern, enterprise-grade REST API boilerplate built with Express 5, TypeScript, PostgreSQL, and Drizzle ORM. Designed for rapid development of secure, scalable SaaS applications with JWT authentication, role-based access control, and email notification support.
+![tsdown](https://img.shields.io/badge/tsdown-0.21-c39f61?logo=tsdown)
+![Docker](https://img.shields.io/badge/Docker-Ready-blue?logo=docker)
+![Express](https://img.shields.io/badge/Express-5-black?logo=express)
+![TypeScript](https://img.shields.io/badge/TypeScript-6-blue?logo=typescript)
+![Postgres](https://img.shields.io/badge/Postgres-17-blue?logo=postgresql)
+![Drizzle](https://img.shields.io/badge/Drizzle_ORM-0.45-orange?logo=drizzle)
 
-## Core Features
+A boilerplate setup for running an **Express.js** backend with **PostgreSQL** using Drizzle ORM.
+This repository provides a production-ready REST API with JWT authentication, RBAC, and email notifications for rapid SaaS development.
 
-- JWT-based authentication with refresh token rotation
+---
+
+## 🚀 Core Features
+
+- Express 5 REST API with ESM
+- JWT authentication with refresh token rotation
 - Role-based access control (RBAC) with granular permissions
-- PostgreSQL database with Drizzle ORM migrations & seeding
+- PostgreSQL with Drizzle ORM migrations & seeding
 - Zod validation for all request payloads
 - Swagger/OpenAPI documentation
-- Email templating with Handlebars
+- Email templating with Handlebars & Nodemailer
 - Secure password hashing with bcrypt
-- Request logging, error handling, and rate limiting
+- Request logging and error handling
 
-## Getting Started
+---
 
-### Prerequisites
-
-- Node.js >= 20
-- PostgreSQL >= 14
-- pnpm
-
-### Setup
-
-```bash
-# Install dependencies
-pnpm install
-
-# Copy environment file and configure
-cp .env.example .env
-
-# Run database migrations
-pnpm run db:migrate
-
-# Seed initial data (roles, permissions, templates, admin user)
-pnpm run db:seed
-
-# Start development server
-pnpm run dev
-```
-
-### Useful Commands
-
-```bash
-pnpm run build          # Lint and compile to dist/
-pnpm run start          # Run production build
-pnpm run typecheck      # TypeScript type checking
-pnpm run db:generate    # Generate new migration files
-pnpm run db:studio      # Open Drizzle Studio
-```
-
-## Project Structure
+## 📂 Project Structure
 
 ```
-src/
-├── db/                 # Database connection, migrations, and seeds
-├── lib/                # Shared utilities (email, logger, swagger)
-├── middlewares/        # Express middlewares (auth, error handler)
-├── modules/            # Feature modules (controllers, services, routes, schemas)
-│   ├── auth-token/
-│   ├── auth-template/
-│   ├── common/
-│   ├── doc/
-│   ├── notification/
-│   ├── permission/
-│   ├── role/
-│   ├── role-permission/
-│   ├── role-user/
-│   ├── user/
-│   └── verification-token/
-├── routes/             # Route aggregation and test utilities
-├── utils/              # Environment config and helpers
-└── server.ts           # Application entry point
+express-rest-starter/
+└───src/
+   ├───server.ts
+   ├───db/
+   │   ├───index.ts
+   │   ├───migrate.ts
+   │   ├───schema.ts
+   │   ├───seed.ts
+   │   └───seeds/
+   │       └───**.seed.ts
+   ├───lib/
+   │   └───index.ts
+   ├───middlewares/
+   │   ├───authorizer.ts
+   │   └───error.ts
+   ├───modules/
+   │   ├───controllers.ts
+   │   ├───helpers.ts
+   │   ├───routers.ts
+   │   ├───services.ts
+   │   ├───**/
+   │   │   ├───**.controller.ts
+   │   │   ├───**.helper.ts
+   │   │   ├───**.router.ts
+   │   │   ├───**.schema.ts
+   │   │   ├───**.service.ts
+   │   │   └───**.type.ts
+   ├───routes/
+   │   └───index.ts
+   └───utils/
+      ├───env.ts
+      └───error/
+         └───index.ts
 ```
 
 ---
 
-Made by Muhammad Shahnewaz
+## ⚙️ Setup
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/shahnewaz171/express-rest-starter.git
+cd express-rest-starter
+```
+
+### 2. Install dependencies
+
+```bash
+pnpm install
+```
+
+### 3. Configure environment variables
+
+Copy the `.env.example` file into `.env` and customize as per need:
+
+```bash
+cp .env.example .env
+```
+
+### 4. Run database migrations
+
+```bash
+pnpm run db:migrate
+```
+
+### 5. Seed initial data
+
+```bash
+pnpm run db:seed
+```
+
+### 6. Start development server
+
+```bash
+pnpm run dev
+```
+
+---
+
+## 🌐 Access
+
+- **Express API** → `http://localhost:8000`
+- **PostgreSQL** → `localhost:5434`
+
+---
+
+## 🛠️ Commands
+
+- Run development server:
+
+  ```bash
+  pnpm run dev
+  ```
+
+- Build for production:
+
+  ```bash
+  pnpm run build
+  ```
+
+- Run production build:
+
+  ```bash
+  pnpm run start
+  ```
+
+- Type check:
+
+  ```bash
+  pnpm run typecheck
+  ```
+
+- Generate migration files:
+
+  ```bash
+  pnpm run db:generate
+  ```
+
+- Open Drizzle Studio:
+
+  ```bash
+  pnpm run db:studio
+  ```
+
+---
+
+👋 Created by **Muhammad Shahnewaz**. If you find this useful, ⭐ the repo or reach out!

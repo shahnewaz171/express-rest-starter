@@ -1,5 +1,5 @@
 {
-  "name": "express-auth",
+  "name": "express-rest-starter",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
