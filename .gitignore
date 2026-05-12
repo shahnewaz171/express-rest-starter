@@ -21,7 +21,7 @@ bun.lockb
 build
 dist
 
-# dotenv environment variable files
+# environment variables
 .env
 .env.development
 
