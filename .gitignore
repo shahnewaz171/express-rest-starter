@@ -1,7 +1,29 @@
-node_modules
-dist
-.env
+# Common
+logs
 *.log
+lerna-debug.log*
+.pnpm-debug.log*
+.DS_Store
+launch.json
+
+# Dependency directories
+node_modules/
+jspm_packages/
+pnpm-lock.yaml
+pnpm-workspace.yaml
+bun.lockb
+
+# Optional npm cache directory
+.npm
+.npmrc
+
+# Build files
+build
+dist
+
+# dotenv environment variable files
+.env
+.env.development
 
 # Agents
 PROMPT.md
