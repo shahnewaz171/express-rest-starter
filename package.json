@@ -28,6 +28,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@aws-sdk/client-ses": "^3.1045.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dayjs": "^1.11.20",
@@ -43,7 +44,8 @@
     "qs": "^6.15.1",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
-    "validator": "^13.15.35"
+    "validator": "^13.15.35",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.14",
