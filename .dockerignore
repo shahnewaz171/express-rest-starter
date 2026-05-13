@@ -1,0 +1,54 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build output
+dist
+
+# Version control
+.git
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Documentation
+*.md
+
+# CI/CD 
+.github 
+
+# Husky 
+.husky 
+
+# Agents 
+.agents 
+.opencode
+
+
+# # Drizzle
+# drizzle.config.ts
+
+# # Config files
+# biome.json
+# tsconfig.json
+# tsdown.config.mts
+# lint-staged.config.mts
+# opencode.json

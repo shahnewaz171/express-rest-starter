@@ -30,7 +30,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Welcome to Route
 app.get('/', (_req, res) => {
-  res.status(200).json({ message: 'Welcome To Express.js API Server' });
+  res.status(200).json({ status: 'ok', message: 'Welcome To Express.js API Server' });
 });
 
 // API Routes

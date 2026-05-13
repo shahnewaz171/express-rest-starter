@@ -112,7 +112,7 @@ pnpm run dev
 ## 🌐 Access
 
 - **Express API** → `http://localhost:8000`
-- **PostgreSQL** → `localhost:5434`
+- **PostgreSQL** → `localhost:5432`
 
 ---
 

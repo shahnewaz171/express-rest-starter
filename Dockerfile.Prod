@@ -1,0 +1,51 @@
+# ============================================================
+# Stage 1: Builder
+# ============================================================
+FROM node:22-slim AS builder
+
+LABEL org.opencontainers.image.authors="Muhammad Shahnewaz"
+
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+WORKDIR /app
+
+# prevent husky / git hook failures in Docker
+ENV HUSKY=0
+
+# install all deps (needed for build)
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install
+
+# copy source
+COPY . .
+
+# build
+RUN pnpm build
+
+
+# ============================================================
+# Stage 2: Production runtime
+# ============================================================
+FROM node:22-slim AS runner
+
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV HUSKY=0
+
+# install ONLY production dependencies
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --prod
+
+# copy compiled output
+COPY --from=builder /app/dist ./dist
+
+# security: non-root user
+RUN groupadd -r appgroup && useradd -r -g appgroup appuser
+USER appuser
+
+EXPOSE 8000
+
+CMD ["node", "dist/server.mjs"]
