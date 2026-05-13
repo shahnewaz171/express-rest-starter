@@ -6,10 +6,10 @@
   "scripts": {
     "build": "pnpm lint && tsdown",
     "compose:clean": "docker system prune -af --volumes",
-    "compose:dev": "pnpm docker:dev-down && pnpm docker:dev-up",
+    "compose:dev": "pnpm compose:dev-down && pnpm compose:dev-up",
     "compose:dev-down": "docker compose -f docker-compose.dev.yml down -v",
     "compose:dev-up": "docker compose -f docker-compose.dev.yml up --build",
-    "compose:prod": "pnpm docker:prod-down && pnpm docker:prod-up",
+    "compose:prod": "pnpm compose:prod-down && pnpm compose:prod-up",
     "compose:prod-down": "docker compose -f docker-compose.prod.yml down -v",
     "compose:prod-up": "docker compose -f docker-compose.prod.yml up -d --build",
     "db:generate": "drizzle-kit generate",
