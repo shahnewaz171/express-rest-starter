@@ -4,13 +4,12 @@ services:
       context: .
       dockerfile: Dockerfile.Dev
     container_name: express-auth-app-dev
-    ports:
-      - "${PORT:-8000}:8000"
     env_file:
       - .env
+    ports:
+      - "${PORT}:${PORT}"
     environment:
-      PG_HOST: postgres
-      POSTGRES_URL: postgresql://${PG_USER}:${PG_PASSWORD}@postgres:5432/${PG_DATABASE}
+      POSTGRES_URL: postgresql://${PG_USER}:${PG_PASSWORD}@${PG_HOST}:${PG_PORT}/${PG_DATABASE}
     volumes:
       - .:/app
       - /app/node_modules
@@ -30,8 +29,10 @@ services:
   postgres:
     image: postgres:17
     container_name: express-auth-postgres-dev
+    env_file:
+      - .env
     ports:
-      - "${PG_PORT:-5432}:5432"
+      - "${PG_PORT}:${PG_PORT}"
     environment:
       POSTGRES_USER: ${PG_USER}
       POSTGRES_PASSWORD: ${PG_PASSWORD}
