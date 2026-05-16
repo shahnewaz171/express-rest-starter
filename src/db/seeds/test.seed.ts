@@ -42,8 +42,8 @@ export const testVerificationTokenRouter = async (
   next: NextFunction
 ) => {
   try {
-    if (!isProduction) {
-      return res.status(403).json({ message: 'Forbidden in non-production environments' });
+    if (isProduction) {
+      return res.status(403).json({ message: 'Forbidden in production environment' });
     }
 
     const { email, status, type, user_id } = req.query as Record<string, string>;

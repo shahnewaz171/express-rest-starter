@@ -4,7 +4,7 @@
     "first_name": "Admin",
     "last_name": "Root",
     "password": "123456aA@",
-    "roles": [{ "name": "admin" }, { "name": "user" }],
+    "roles": [{ "name": "admin" }, { "name": "moderator" }, { "name": "user" }],
     "status": "active"
   },
   {
@@ -12,7 +12,7 @@
     "first_name": "John",
     "last_name": "Doe",
     "password": "123456aA@",
-    "roles": [{ "name": "user" }],
+    "roles": [{ "name": "developer" }, { "name": "user" }],
     "status": "active"
   },
   {

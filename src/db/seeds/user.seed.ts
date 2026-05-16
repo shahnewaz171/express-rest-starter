@@ -19,11 +19,24 @@ export default async function seedUser(db: DB, roles: { id: string; name: string
     .onConflictDoNothing()
     .returning();
 
+  const roleMap = new Map(roles.map((r) => [r.name, r.id]));
+  const dummyUserEmails = new Map(users.map((u) => [u.email, u]));
   const roleUserEntries: { role_id: string; user_id: string }[] = [];
 
   for (const insertedUser of insertedUsers) {
-    for (const r of roles) {
-      roleUserEntries.push({ role_id: r.id, user_id: insertedUser.id });
+    const userRoles = dummyUserEmails.get(insertedUser.email)?.roles;
+
+    if (userRoles) {
+      for (const role of userRoles) {
+        const roleId = roleMap.get(role?.name);
+
+        if (roleId) {
+          roleUserEntries.push({
+            role_id: roleId,
+            user_id: insertedUser.id
+          });
+        }
+      }
     }
   }
 

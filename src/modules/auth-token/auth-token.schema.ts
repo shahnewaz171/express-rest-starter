@@ -11,7 +11,7 @@ export const authToken = pgTable(
     expires_at: timestamp('expires_at'),
     user_id: uuid('user_id')
       .notNull()
-      .references(() => user.id),
+      .references(() => user.id, { onDelete: 'cascade' }),
     created_at: timestamp('created_at').notNull().defaultNow(),
     updated_at: timestamp('updated_at').notNull().defaultNow()
   },

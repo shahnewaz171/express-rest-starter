@@ -8,7 +8,7 @@ export const permission = pgTable(
     id: uuid('id').defaultRandom().primaryKey(),
     action: text('action').notNull(),
     module: text('module').notNull(),
-    created_by: uuid('created_by').references(() => user.id),
+    created_by: uuid('created_by').references(() => user.id, { onDelete: 'set null' }),
     created_at: timestamp('created_at').notNull().defaultNow(),
     updated_at: timestamp('updated_at').notNull().defaultNow()
   },

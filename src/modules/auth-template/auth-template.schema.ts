@@ -9,13 +9,12 @@ export const authTemplate = pgTable(
     body: text('body').notNull(),
     event: text('event').notNull().unique(),
     subject: text('subject').notNull(),
-    created_by: uuid('created_by').references(() => user.id),
+    created_by: uuid('created_by').references(() => user.id, { onDelete: 'set null' }),
     created_at: timestamp('created_at').notNull().defaultNow(),
     updated_at: timestamp('updated_at').notNull().defaultNow()
   },
   (table) => [
     uniqueIndex('auth_templates_id_idx').on(table.id),
-    uniqueIndex('auth_templates_event_idx').on(table.event),
     index('auth_templates_created_at_idx').on(table.created_at),
     index('auth_templates_created_by_idx').on(table.created_by),
     index('auth_templates_subject_idx').on(table.subject),

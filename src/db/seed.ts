@@ -21,22 +21,24 @@ const startDBSeeding = async () => {
     console.log('Starting database seeding...');
 
     // Reset tables in the correct order to avoid foreign key constraint issues. Remember to adjust the order (child tables first) to remove relationships.
-    await resetTables(db, [
-      schema.authTemplate,
-      schema.authToken,
-      schema.verificationToken,
-      schema.rolePermission,
-      schema.roleUser,
-      schema.permission,
-      schema.role,
-      schema.user
-    ]);
+    await db.transaction(async (tx) => {
+      await resetTables(tx, [
+        schema.authTemplate,
+        schema.authToken,
+        schema.verificationToken,
+        schema.rolePermission,
+        schema.roleUser,
+        schema.permission,
+        schema.role,
+        schema.user
+      ]);
 
-    await seeds.authTemplate(db);
-    const roles = await seeds.role(db);
-    await seeds.permission(db);
-    await seeds.rolePermission(db);
-    await seeds.user(db, roles);
+      await seeds.authTemplate(tx);
+      const roles = await seeds.role(tx);
+      await seeds.permission(tx);
+      await seeds.rolePermission(tx);
+      await seeds.user(tx, roles);
+    });
 
     console.log('Database seeding completed');
   } catch (error) {

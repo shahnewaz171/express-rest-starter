@@ -15,8 +15,8 @@ export const rolePermission = pgTable(
       .notNull()
       .references(() => permission.id, { onDelete: 'cascade' }),
     can_do_the_action: boolean('can_do_the_action').notNull().default(false),
-    created_by: uuid('created_by').references(() => user.id),
-    updated_by: uuid('updated_by').references(() => user.id),
+    created_by: uuid('created_by').references(() => user.id, { onDelete: 'set null' }),
+    updated_by: uuid('updated_by').references(() => user.id, { onDelete: 'set null' }),
     created_at: timestamp('created_at').notNull().defaultNow(),
     updated_at: timestamp('updated_at').notNull().defaultNow()
   },

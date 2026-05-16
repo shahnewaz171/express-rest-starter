@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { index, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { index, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 import { user } from '@/src/modules/user/user.schema';
 
@@ -24,17 +24,18 @@ export const verificationToken = pgTable(
     type: verificationTokenTypeEnum('type').notNull().default('user_verification'),
     user_id: uuid('user_id')
       .notNull()
-      .references(() => user.id),
+      .references(() => user.id, { onDelete: 'cascade' }),
     created_at: timestamp('created_at').notNull().defaultNow(),
     updated_at: timestamp('updated_at').notNull().defaultNow()
   },
   (table) => [
-    index('verification_tokens_id_idx').on(table.id),
+    uniqueIndex('verification_tokens_id_idx').on(table.id),
     index('verification_tokens_email_token_user_id_idx').on(
       table.email,
       table.token,
       table.user_id
     ),
+    index('verification_tokens_token_idx').on(table.token),
     index('verification_tokens_created_at_idx').on(table.created_at),
     index('verification_tokens_updated_at_idx').on(table.updated_at)
   ]
