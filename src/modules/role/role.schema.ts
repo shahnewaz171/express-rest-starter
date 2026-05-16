@@ -13,6 +13,7 @@ export const role = pgTable(
   },
   (table) => [
     uniqueIndex('roles_id_idx').on(table.id),
+    uniqueIndex('roles_name_idx').on(table.name),
     index('roles_created_at_idx').on(table.created_at),
     index('roles_created_by_idx').on(table.created_by),
     index('roles_updated_at_idx').on(table.updated_at)

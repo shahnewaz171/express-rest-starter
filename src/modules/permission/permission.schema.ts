@@ -14,10 +14,9 @@ export const permission = pgTable(
   },
   (table) => [
     uniqueIndex('permissions_id_idx').on(table.id),
-    uniqueIndex('permissions_action_module_idx').on(table.action, table.module),
     index('permissions_created_at_idx').on(table.created_at),
     index('permissions_created_by_idx').on(table.created_by),
-    index('permissions_action_idx').on(table.action),
+    uniqueIndex('permissions_action_idx').on(table.action),
     index('permissions_module_idx').on(table.module),
     index('permissions_updated_at_idx').on(table.updated_at)
   ]

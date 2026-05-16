@@ -17,6 +17,7 @@ export const authTemplate = pgTable(
     uniqueIndex('auth_templates_id_idx').on(table.id),
     index('auth_templates_created_at_idx').on(table.created_at),
     index('auth_templates_created_by_idx').on(table.created_by),
+    index('auth_templates_event_idx').on(table.event),
     index('auth_templates_subject_idx').on(table.subject),
     index('auth_templates_updated_at_idx').on(table.updated_at)
   ]

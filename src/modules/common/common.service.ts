@@ -13,14 +13,12 @@ export const compareHashPassword = (str: string, hashStr: string) => {
 };
 
 export const checkOldPasswords = (new_password: string, oldPasswords: string[] = []) => {
-  let isOldPasswordMatched = false;
-
   for (const password of oldPasswords) {
     if (compareHashPassword(new_password, password)) {
-      isOldPasswordMatched = true;
+      return true;
     }
   }
-  return isOldPasswordMatched;
+  return false;
 };
 
 export const generateHashPassword = (str: string = '') => bcrypt.hashSync(str, 10);

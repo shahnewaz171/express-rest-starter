@@ -101,7 +101,7 @@ export const createARolePermissionForMutation = async (
       eq(rolePermission.permission_id, parsed.data.permission_id)
     )
   });
-  if (existing) {
+  if (existing?.id) {
     throw new CustomError(409, 'ROLE_PERMISSION_ALREADY_EXISTS');
   }
 
@@ -114,6 +114,10 @@ export const createARolePermissionForMutation = async (
       created_by: user.user_id
     })
     .returning();
+
+  if (!created) {
+    throw new CustomError(409, 'ROLE_PERMISSION_ALREADY_EXISTS');
+  }
 
   return created;
 };

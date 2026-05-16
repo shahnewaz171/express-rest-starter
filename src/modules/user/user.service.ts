@@ -131,7 +131,7 @@ export const registerUser = async (params: RegisterUserInput, tx?: DB) => {
   return userData;
 };
 
-export const loginUser = async (params: LoginUserInput, tx?: DB) => {
+export const loginUser = async (params: LoginUserInput, tx: DB) => {
   const parsed = loginSchema.safeParse(params);
   if (!parsed.success) {
     throw new CustomError(400, parsed.error.issues.map((i) => i.message).join(', '));
@@ -139,7 +139,7 @@ export const loginUser = async (params: LoginUserInput, tx?: DB) => {
 
   const { email, password } = parsed.data;
 
-  const existingUser = await db.query.user.findFirst({
+  const existingUser = await tx.query.user.findFirst({
     where: eq(user.email, email),
     with: {
       role_users: {
@@ -174,7 +174,7 @@ export const loginUser = async (params: LoginUserInput, tx?: DB) => {
     tx
   );
 
-  await db.update(user).set({ last_login_at: new Date() }).where(eq(user.id, existingUser.id));
+  await tx.update(user).set({ last_login_at: new Date() }).where(eq(user.id, existingUser.id));
 
   return {
     access_token: tokens.access_token,
@@ -197,6 +197,8 @@ export const verifyUserEmail = async (params: { email: string; token: string }, 
     throw new CustomError(400, 'INVALID_EMAIL');
   }
 
+  const executor = tx ?? db;
+
   const existingToken = await verificationTokenService.validateVerificationTokenForUser(
     {
       email: params.email,
@@ -206,7 +208,7 @@ export const verifyUserEmail = async (params: { email: string; token: string }, 
     tx
   );
 
-  const existingUser = await db.query.user.findFirst({
+  const existingUser = await executor.query.user.findFirst({
     where: eq(user.id, existingToken.user_id)
   });
 
@@ -214,7 +216,7 @@ export const verifyUserEmail = async (params: { email: string; token: string }, 
     throw new CustomError(404, 'USER_DOES_NOT_EXIST');
   }
 
-  const [updatedUser] = await db
+  const [updatedUser] = await executor
     .update(user)
     .set({ status: 'active' })
     .where(eq(user.id, existingToken.user_id))
@@ -229,7 +231,9 @@ export const resendUserVerificationEmail = async (params: { email: string }, tx?
     throw new CustomError(400, 'INVALID_EMAIL');
   }
 
-  const existingUser = await db.query.user.findFirst({
+  const executor = tx ?? db;
+
+  const existingUser = await executor.query.user.findFirst({
     where: or(eq(user.email, params.email), eq(user.new_email, params.email))
   });
 
@@ -243,7 +247,7 @@ export const resendUserVerificationEmail = async (params: { email: string }, tx?
 
   const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
 
-  const recentTokens = await db.query.verificationToken.findMany({
+  const recentTokens = await executor.query.verificationToken.findMany({
     where: and(
       eq(verificationToken.user_id, existingUser.id),
       eq(verificationToken.type, 'user_verification'),
@@ -287,7 +291,9 @@ export const changeEmailByUser = async (
     throw new CustomError(400, 'INVALID_EMAIL');
   }
 
-  const existingUser = await db.query.user.findFirst({
+  const executor = tx ?? db;
+
+  const existingUser = await executor.query.user.findFirst({
     where: eq(user.id, params.user_id)
   });
 
@@ -299,7 +305,7 @@ export const changeEmailByUser = async (
     throw new CustomError(400, `USER_IS_${existingUser.status}`);
   }
 
-  const emailExists = await db.query.user.findFirst({
+  const emailExists = await executor.query.user.findFirst({
     where: eq(user.email, params.new_email)
   });
 
@@ -307,7 +313,7 @@ export const changeEmailByUser = async (
     throw new CustomError(400, 'EMAIL_IS_ALREADY_ASSOCIATED_WITH_A_USER');
   }
 
-  const [updatedUser] = await db
+  const [updatedUser] = await executor
     .update(user)
     .set({ new_email: params.new_email })
     .where(eq(user.id, params.user_id))
@@ -332,7 +338,9 @@ export const cancelChangeEmailByUser = async (params: { email: string }, tx?: DB
     throw new CustomError(400, 'INVALID_EMAIL');
   }
 
-  const existingUser = await db.query.user.findFirst({
+  const executor = tx ?? db;
+
+  const existingUser = await executor.query.user.findFirst({
     where: eq(user.new_email, params.email)
   });
 
@@ -344,7 +352,7 @@ export const cancelChangeEmailByUser = async (params: { email: string }, tx?: DB
     throw new CustomError(400, `USER_IS_${existingUser.status}`);
   }
 
-  const [updatedUser] = await db
+  const [updatedUser] = await executor
     .update(user)
     .set({ new_email: null })
     .where(eq(user.id, existingUser.id))
@@ -370,7 +378,9 @@ export const verifyChangeEmailByUser = async (
   params: { user_id: string; token: string },
   tx?: DB
 ) => {
-  const existingUser = await db.query.user.findFirst({
+  const executor = tx ?? db;
+
+  const existingUser = await executor.query.user.findFirst({
     where: eq(user.id, params.user_id)
   });
 
@@ -396,7 +406,7 @@ export const verifyChangeEmailByUser = async (
     tx
   );
 
-  const [updatedUser] = await db
+  const [updatedUser] = await executor
     .update(user)
     .set({ email: existingUser.new_email, new_email: null })
     .where(eq(user.id, params.user_id))
@@ -407,14 +417,16 @@ export const verifyChangeEmailByUser = async (
 
 export const setUserEmailByAdmin = async (
   params: { user_id: string; new_email: string },
-  _tx?: DB
+  tx?: DB
 ) => {
   const emailParsed = emailSchema.safeParse(params.new_email);
   if (!emailParsed.success) {
     throw new CustomError(400, 'INVALID_EMAIL');
   }
 
-  const existingUser = await db.query.user.findFirst({
+  const executor = tx ?? db;
+
+  const existingUser = await executor.query.user.findFirst({
     where: eq(user.id, params.user_id)
   });
 
@@ -422,7 +434,7 @@ export const setUserEmailByAdmin = async (
     throw new CustomError(404, 'USER_NOT_FOUND');
   }
 
-  const emailExists = await db.query.user.findFirst({
+  const emailExists = await executor.query.user.findFirst({
     where: eq(user.email, params.new_email)
   });
 
@@ -430,7 +442,7 @@ export const setUserEmailByAdmin = async (
     throw new CustomError(400, 'EMAIL_ALREADY_EXISTS');
   }
 
-  const [updatedUser] = await db
+  const [updatedUser] = await executor
     .update(user)
     .set({ email: params.new_email, new_email: null })
     .where(eq(user.id, params.user_id))
@@ -451,7 +463,9 @@ export const changePasswordByUser = async (
     throw new CustomError(400, parsed.error.issues.map((i) => i.message).join(', '));
   }
 
-  const existingUser = await db.query.user.findFirst({
+  const executor = tx ?? db;
+
+  const existingUser = await executor.query.user.findFirst({
     where: eq(user.id, params.user_id)
   });
 
@@ -487,7 +501,7 @@ export const changePasswordByUser = async (
 
   const oldPasswords = [...slice(existingUser.old_passwords ?? [], 1, 3), hashedPassword];
 
-  const [updatedUser] = await db
+  const [updatedUser] = await executor
     .update(user)
     .set({ password: hashedPassword, old_passwords: oldPasswords })
     .where(eq(user.id, params.user_id))
@@ -507,7 +521,9 @@ export const changePasswordByAdmin = async (
     throw new CustomError(400, parsed.error.issues.map((i) => i.message).join(', '));
   }
 
-  const existingUser = await db.query.user.findFirst({
+  const executor = tx ?? db;
+
+  const existingUser = await executor.query.user.findFirst({
     where: eq(user.id, params.user_id)
   });
 
@@ -519,7 +535,7 @@ export const changePasswordByAdmin = async (
 
   const oldPasswords = [...slice(existingUser.old_passwords ?? [], 1, 3), hashedPassword];
 
-  const [updatedUser] = await db
+  const [updatedUser] = await executor
     .update(user)
     .set({ password: hashedPassword, old_passwords: oldPasswords })
     .where(eq(user.id, params.user_id))
@@ -536,7 +552,9 @@ export const forgotPassword = async (params: { email: string }, tx?: DB) => {
     throw new CustomError(400, parsed.error.issues.map((i) => i.message).join(', '));
   }
 
-  const existingUser = await db.query.user.findFirst({
+  const executor = tx ?? db;
+
+  const existingUser = await executor.query.user.findFirst({
     where: eq(user.email, parsed.data.email)
   });
 
@@ -546,7 +564,7 @@ export const forgotPassword = async (params: { email: string }, tx?: DB) => {
 
   const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
 
-  const recentTokens = await db.query.verificationToken.findMany({
+  const recentTokens = await executor.query.verificationToken.findMany({
     where: and(
       eq(verificationToken.user_id, existingUser.id),
       eq(verificationToken.type, 'forgot_password'),
@@ -587,7 +605,9 @@ export const retryForgotPassword = async (params: { email: string }, tx?: DB) =>
     throw new CustomError(400, parsed.error.issues.map((i) => i.message).join(', '));
   }
 
-  const existingUser = await db.query.user.findFirst({
+  const executor = tx ?? db;
+
+  const existingUser = await executor.query.user.findFirst({
     where: eq(user.email, parsed.data.email)
   });
 
@@ -597,7 +617,7 @@ export const retryForgotPassword = async (params: { email: string }, tx?: DB) =>
 
   const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
 
-  const recentTokens = await db.query.verificationToken.findMany({
+  const recentTokens = await executor.query.verificationToken.findMany({
     where: and(
       eq(verificationToken.user_id, existingUser.id),
       eq(verificationToken.type, 'forgot_password'),
@@ -674,7 +694,9 @@ export const verifyForgotPassword = async (
     throw new CustomError(400, 'PASSWORD_DID_NOT_CONFORM_OUR_POLICY');
   }
 
-  const existingUser = await db.query.user.findFirst({
+  const executor = tx ?? db;
+
+  const existingUser = await executor.query.user.findFirst({
     where: eq(user.email, parsed.data.email)
   });
 
@@ -711,7 +733,7 @@ export const verifyForgotPassword = async (
     .filter(Boolean)
     .slice(-5);
 
-  const [updatedUser] = await db
+  const [updatedUser] = await executor
     .update(user)
     .set({ password: hashedPassword, old_passwords: oldPasswords })
     .where(eq(user.id, existingUser.id))
@@ -724,13 +746,15 @@ export const verifyForgotPassword = async (
 
 export const verifyUserPassword = async (
   params: { user_id: string; password: string },
-  _tx?: DB
+  tx?: DB
 ) => {
   if (!params.password) {
     throw new CustomError(400, 'PASSWORD_IS_REQUIRED');
   }
 
-  const existingUser = await db.query.user.findFirst({
+  const executor = tx ?? db;
+
+  const existingUser = await executor.query.user.findFirst({
     where: eq(user.id, params.user_id)
   });
 

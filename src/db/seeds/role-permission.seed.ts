@@ -17,5 +17,8 @@ export default async function seedRolePermission(db: DB) {
     can_do_the_action: true
   }));
 
-  await db.insert(rolePermission).values(adminRolePermissions).onConflictDoNothing();
+  await db
+    .insert(rolePermission)
+    .values(adminRolePermissions)
+    .onConflictDoNothing({ target: [rolePermission.role_id, rolePermission.permission_id] });
 }

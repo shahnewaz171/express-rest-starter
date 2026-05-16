@@ -17,5 +17,5 @@ export default async function seedAuthTemplate(db: DB) {
         subject: 'Password Reset Request'
       }
     ])
-    .onConflictDoNothing();
+    .onConflictDoNothing({ target: [authTemplate.event] });
 }

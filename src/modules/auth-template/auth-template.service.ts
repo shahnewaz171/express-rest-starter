@@ -3,7 +3,6 @@ import { eq } from 'drizzle-orm';
 import { CustomError } from '@/src/utils/error';
 
 import {
-  getAnAuthTemplate,
   getAnAuthTemplateForQuery,
   getAuthTemplatesForQuery
 } from '@/src/modules/auth-template/auth-template.helper';
@@ -18,22 +17,24 @@ import type {
 import type { DB } from '@/src/db';
 import { db } from '@/src/db';
 
-export const createAnAuthTemplate = async (data: NewAuthTemplate, tx?: DB) => {
-  const executor = tx || db;
-  const result = await executor.insert(authTemplate).values(data).returning();
+export const createAnAuthTemplate = async (data: NewAuthTemplate, tx: DB = db) => {
+  const result = await tx.insert(authTemplate).values(data).onConflictDoNothing().returning();
 
   return result[0];
 };
 
-export const updateAnAuthTemplate = async (id: string, data: UpdateAuthTemplateInput, tx?: DB) => {
-  const executor = tx || db;
+export const updateAnAuthTemplate = async (
+  id: string,
+  data: UpdateAuthTemplateInput,
+  tx: DB = db
+) => {
   const updateData: Record<string, unknown> = { updated_at: new Date() };
 
   if (data.body !== undefined) updateData.body = data.body;
   if (data.event !== undefined) updateData.event = data.event;
   if (data.subject !== undefined) updateData.subject = data.subject;
 
-  const result = await executor
+  const result = await tx
     .update(authTemplate)
     .set(updateData)
     .where(eq(authTemplate.id, id))
@@ -42,9 +43,8 @@ export const updateAnAuthTemplate = async (id: string, data: UpdateAuthTemplateI
   return result[0] ?? null;
 };
 
-export const deleteAnAuthTemplate = async (id: string, tx?: DB) => {
-  const executor = tx || db;
-  const result = await executor.delete(authTemplate).where(eq(authTemplate.id, id)).returning();
+export const deleteAnAuthTemplate = async (id: string, tx: DB = db) => {
+  const result = await tx.delete(authTemplate).where(eq(authTemplate.id, id)).returning();
 
   return result[0] ?? null;
 };
@@ -54,15 +54,7 @@ export const createAnAuthTemplateForMutation = async (
   userId: string,
   tx?: DB
 ) => {
-  const existing = await getAnAuthTemplate({
-    where: eq(authTemplate.event, params.event)
-  });
-
-  if (existing) {
-    throw new CustomError(409, 'AUTH_TEMPLATE_ALREADY_EXISTS');
-  }
-
-  return createAnAuthTemplate(
+  const created = await createAnAuthTemplate(
     {
       body: params.body,
       event: params.event,
@@ -71,6 +63,12 @@ export const createAnAuthTemplateForMutation = async (
     },
     tx
   );
+
+  if (!created) {
+    throw new CustomError(409, 'COULD_NOT_CREATE_AUTH_TEMPLATE');
+  }
+
+  return created;
 };
 
 export const updateAnAuthTemplateForMutation = async (
@@ -93,4 +91,4 @@ export const removeAnAuthTemplateForMutation = async (params: AuthTemplateQueryP
   return deleteAnAuthTemplate(template.id, tx);
 };
 
-export { getAnAuthTemplateForQuery, getAuthTemplatesForQuery };
+export { getAuthTemplatesForQuery };

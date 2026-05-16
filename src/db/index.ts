@@ -2,6 +2,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 
 import { DATABASE_URL, isProduction } from '@/src/utils/env';
+import { CustomError } from '@/src/utils/error';
 
 import * as schema from '@/src/db/schema';
 
@@ -22,16 +23,13 @@ export const connectToPostgresDB = async () => {
     client.release();
   } catch (error) {
     console.error('Database connection error:', error);
-    process.exit();
+    process.exit(1);
   }
 };
 
 export const db = drizzle(pool, { schema, logger: !isProduction });
-export type DB = typeof db | Transaction;
-
-import { CustomError } from '@/src/utils/error';
-
 export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+export type DB = typeof db | Transaction;
 
 export const useTransaction = async <T>(callback: (tx: Transaction) => Promise<T>): Promise<T> => {
   try {

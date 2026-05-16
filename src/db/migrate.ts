@@ -6,7 +6,7 @@ import { db, pool } from '@/src/db';
 
 import config from '@/drizzle.config';
 
-if (!DB_MIGRATING) {
+if (DB_MIGRATING !== 'true') {
   throw new Error('You must set DB_MIGRATING to "true" when running migrations');
 }
 

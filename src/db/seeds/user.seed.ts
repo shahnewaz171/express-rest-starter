@@ -10,13 +10,13 @@ export default async function seedUser(db: DB, roles: { id: string; name: string
   const insertedUsers = await db
     .insert(user)
     .values(
-      users.map((u) => ({
+      users.map(({ roles: _roles, ...u }) => ({
         ...u,
         password: generateHashPassword(u.password),
         status: u.status as UserStatus
       }))
     )
-    .onConflictDoNothing()
+    .onConflictDoNothing({ target: [user.email] })
     .returning();
 
   const roleMap = new Map(roles.map((r) => [r.name, r.id]));
@@ -41,6 +41,9 @@ export default async function seedUser(db: DB, roles: { id: string; name: string
   }
 
   if (roleUserEntries.length > 0) {
-    await db.insert(roleUser).values(roleUserEntries).onConflictDoNothing();
+    await db
+      .insert(roleUser)
+      .values(roleUserEntries)
+      .onConflictDoNothing({ target: [roleUser.role_id, roleUser.user_id] });
   }
 }

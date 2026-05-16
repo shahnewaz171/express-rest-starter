@@ -35,7 +35,6 @@ export const verificationToken = pgTable(
       table.token,
       table.user_id
     ),
-    index('verification_tokens_token_idx').on(table.token),
     index('verification_tokens_created_at_idx').on(table.created_at),
     index('verification_tokens_updated_at_idx').on(table.updated_at)
   ]

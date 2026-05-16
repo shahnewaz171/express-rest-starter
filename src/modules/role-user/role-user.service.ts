@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, not } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { CustomError } from '@/src/utils/error';
@@ -91,6 +91,10 @@ export const createARoleUserForMutation = async (params: CreateRoleUserInput, tx
     })
     .returning();
 
+  if (!created) {
+    throw new CustomError(409, 'ROLE_USER_ALREADY_EXISTS');
+  }
+
   return created;
 };
 
@@ -133,7 +137,7 @@ export const updateARoleUserForMutation = async (
       where: and(
         eq(roleUser.role_id, data.role_id),
         eq(roleUser.user_id, data.user_id),
-        eq(roleUser.id, entity_id)
+        not(eq(roleUser.id, entity_id))
       )
     });
     if (existing) {

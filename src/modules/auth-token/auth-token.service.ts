@@ -1,6 +1,7 @@
 import { and, eq, type SQL } from 'drizzle-orm';
 
 import { ACCESS_TOKEN_EXPIRY, REFRESH_TOKEN_EXPIRY } from '@/src/utils/env';
+import { CustomError } from '@/src/utils/error';
 
 import type { NewAuthToken } from '@/src/modules/auth-token/auth-token.schema';
 import { authToken } from '@/src/modules/auth-token/auth-token.schema';
@@ -103,11 +104,11 @@ export const refreshAuthTokensForUser = async (params: RefreshTokenInput, tx?: D
     | undefined;
 
   if (!user?.id) {
-    throw new Error('USER_DOES_NOT_EXIST');
+    throw new CustomError(404, 'USER_DOES_NOT_EXIST');
   }
 
   if (user.status !== 'active') {
-    throw new Error('USER_IS_NOT_ACTIVE');
+    throw new CustomError(400, 'USER_IS_NOT_ACTIVE');
   }
 
   await deleteAnAuthToken(eq(authToken.id, existingToken.id), tx);
@@ -136,17 +137,18 @@ export const revokeAnAuthTokenForUser = async (params: RevokeTokenInput, tx?: DB
 
 export const revokeAuthTokensForUser = async (params: { user_id: string }, tx?: DB) => {
   const { user_id } = params;
+  const executor = tx ?? db;
 
-  const user = await db.query.user.findFirst({
+  const foundUser = await executor.query.user.findFirst({
     where: (users, { eq: eqFn }) => eqFn(users.id, user_id)
   });
 
-  if (!user?.id) {
-    throw new Error('USER_DOES_NOT_EXIST');
+  if (!foundUser?.id) {
+    throw new CustomError(404, 'USER_DOES_NOT_EXIST');
   }
 
-  if (user.status !== 'active') {
-    throw new Error('USER_IS_NOT_ACTIVE');
+  if (foundUser.status !== 'active') {
+    throw new CustomError(400, 'USER_IS_NOT_ACTIVE');
   }
 
   const deleted = await deleteAuthTokens(eq(authToken.user_id, user_id), tx);
