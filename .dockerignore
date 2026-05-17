@@ -32,16 +32,19 @@ pnpm-debug.log*
 # Documentation
 *.md
 
-# CI/CD 
-.github 
+# CI/CD
+.github
 
-# Husky 
-.husky 
+# Husky
+.husky
 
-# Agents 
-.agents 
+# Agents
+.agents
 .opencode
 
+# Docker files
+Dockerfile*
+docker-compose*
 
 # # Drizzle
 # drizzle.config.ts

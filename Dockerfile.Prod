@@ -14,7 +14,7 @@ ENV HUSKY=0
 
 # install all deps (needed for build)
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install
+RUN pnpm install --frozen-lockfile
 
 # copy source
 COPY . .
@@ -22,28 +22,29 @@ COPY . .
 # build
 RUN pnpm build
 
+# install production dependencies for copying to runner
+RUN pnpm install --frozen-lockfile --prod
+
 
 # ============================================================
 # Stage 2: Production runtime
 # ============================================================
 FROM node:22-slim AS runner
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV HUSKY=0
 
-# install ONLY production dependencies
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile --prod
+# copy production dependencies and compiled output from builder
+COPY --from=builder /app/node_modules ./node_modules
 
 # copy compiled output
 COPY --from=builder /app/dist ./dist
 
-# security: non-root user
+# security: run as non-root user and change root ownership of the app directory
 RUN groupadd -r appgroup && useradd -r -g appgroup appuser
+RUN chown -R appuser:appgroup /app
 USER appuser
 
 EXPOSE 8000

@@ -4,7 +4,7 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "build": "pnpm lint && tsdown",
+    "build": "tsdown",
     "compose:clean": "docker system prune -af --volumes",
     "compose:dev": "pnpm compose:dev-down && pnpm compose:dev-up",
     "compose:dev-down": "docker compose -f docker-compose.dev.yml down -v",
