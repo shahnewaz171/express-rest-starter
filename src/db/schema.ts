@@ -6,8 +6,12 @@ import { permission } from '@/src/modules/permission/permission.schema';
 import { role } from '@/src/modules/role/role.schema';
 import { rolePermission } from '@/src/modules/role-permission/role-permission.schema';
 import { roleUser } from '@/src/modules/role-user/role-user.schema';
-import { user } from '@/src/modules/user/user.schema';
-import { verificationToken } from '@/src/modules/verification-token/verification-token.schema';
+import { user, userStatusEnum } from '@/src/modules/user/user.schema';
+import {
+  verificationToken,
+  verificationTokenStatusEnum,
+  verificationTokenTypeEnum
+} from '@/src/modules/verification-token/verification-token.schema';
 
 export const userRelations = relations(user, ({ many }) => ({
   auth_tokens: many(authToken),
@@ -78,6 +82,7 @@ export const authTemplateRelations = relations(authTemplate, ({ one }) => ({
   })
 }));
 
+// enum & schema exports
 export {
   authTemplate,
   authToken,
@@ -86,5 +91,8 @@ export {
   rolePermission,
   roleUser,
   user,
-  verificationToken
+  userStatusEnum,
+  verificationToken,
+  verificationTokenStatusEnum,
+  verificationTokenTypeEnum
 };

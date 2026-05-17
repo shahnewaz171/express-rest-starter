@@ -17,7 +17,6 @@ export const roleUser = pgTable(
     updated_at: timestamp('updated_at').notNull().defaultNow()
   },
   (table) => [
-    uniqueIndex('role_users_id_idx').on(table.id),
     uniqueIndex('role_users_role_id_user_id_idx').on(table.role_id, table.user_id),
     index('role_users_created_at_idx').on(table.created_at),
     index('role_users_updated_at_idx').on(table.updated_at)

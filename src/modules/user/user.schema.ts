@@ -1,13 +1,4 @@
-import {
-  index,
-  jsonb,
-  pgEnum,
-  pgTable,
-  text,
-  timestamp,
-  uniqueIndex,
-  uuid
-} from 'drizzle-orm/pg-core';
+import { index, jsonb, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 export const userStatusEnum = pgEnum('user_status', [
   'active',
@@ -15,7 +6,6 @@ export const userStatusEnum = pgEnum('user_status', [
   'invited',
   'unverified'
 ]);
-export type UserStatus = (typeof userStatusEnum.enumValues)[number];
 
 export const user = pgTable(
   'users',
@@ -35,8 +25,6 @@ export const user = pgTable(
     last_login_at: timestamp('last_login_at')
   },
   (table) => [
-    uniqueIndex('users_id_idx').on(table.id),
-    uniqueIndex('users_email_idx').on(table.email),
     index('users_name_idx').on(table.first_name, table.last_name),
     index('users_status_idx').on(table.status),
     index('users_created_at_idx').on(table.created_at),

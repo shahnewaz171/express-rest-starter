@@ -1,5 +1,9 @@
 import type { Request } from 'express';
 
+import type { userStatusEnum } from '@/src/modules/user/user.schema';
+
+export type UserStatus = (typeof userStatusEnum.enumValues)[number];
+
 export interface RegisterUserInput {
   email: string;
   first_name: string;

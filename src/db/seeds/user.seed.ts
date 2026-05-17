@@ -1,7 +1,7 @@
 import { generateHashPassword } from '@/src/modules/common/common.service';
 import { roleUser } from '@/src/modules/role-user/role-user.schema';
-import type { UserStatus } from '@/src/modules/user/user.schema';
 import { user } from '@/src/modules/user/user.schema';
+import type { UserStatus } from '@/src/modules/user/user.type';
 
 import type { DB } from '@/src/db';
 import users from '@/src/db/seeds/data/users.json' with { type: 'json' };

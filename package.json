@@ -18,6 +18,7 @@
     "db:migrate": "tsx src/db/migrate.ts",
     "db:seed": "tsx src/db/seed.ts",
     "db:push": "drizzle-kit push",
+    "db:drop": "drizzle-kit drop",
     "db:studio": "drizzle-kit studio",
     "db:check": "drizzle-kit check",
     "dev": "tsx --watch src/server.ts",

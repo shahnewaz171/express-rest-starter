@@ -16,8 +16,8 @@ export const authToken = pgTable(
     updated_at: timestamp('updated_at').notNull().defaultNow()
   },
   (table) => [
-    uniqueIndex('auth_tokens_id_idx').on(table.id),
     uniqueIndex('auth_tokens_access_token_user_id_idx').on(table.access_token, table.user_id),
+    index('auth_tokens_user_id_idx').on(table.user_id),
     index('auth_tokens_created_at_idx').on(table.created_at),
     index('auth_tokens_refresh_token_idx').on(table.refresh_token),
     index('auth_tokens_updated_at_idx').on(table.updated_at)

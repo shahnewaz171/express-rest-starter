@@ -1,4 +1,4 @@
-import { index, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { index, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 import { user } from '@/src/modules/user/user.schema';
 
@@ -14,10 +14,8 @@ export const authTemplate = pgTable(
     updated_at: timestamp('updated_at').notNull().defaultNow()
   },
   (table) => [
-    uniqueIndex('auth_templates_id_idx').on(table.id),
     index('auth_templates_created_at_idx').on(table.created_at),
     index('auth_templates_created_by_idx').on(table.created_by),
-    index('auth_templates_event_idx').on(table.event),
     index('auth_templates_subject_idx').on(table.subject),
     index('auth_templates_updated_at_idx').on(table.updated_at)
   ]

@@ -21,7 +21,6 @@ export const rolePermission = pgTable(
     updated_at: timestamp('updated_at').notNull().defaultNow()
   },
   (table) => [
-    uniqueIndex('role_permissions_id_idx').on(table.id),
     uniqueIndex('role_permissions_role_id_permission_id_idx').on(
       table.role_id,
       table.permission_id
