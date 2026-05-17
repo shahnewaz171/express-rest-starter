@@ -5,7 +5,7 @@ import { user } from '@/src/modules/user/user.schema';
 export const authToken = pgTable(
   'auth_tokens',
   {
-    id: uuid('id').defaultRandom().primaryKey(),
+    id: uuid('id').primaryKey().defaultRandom(),
     access_token: text('access_token').notNull(),
     refresh_token: text('refresh_token'),
     expires_at: timestamp('expires_at'),

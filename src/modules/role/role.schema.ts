@@ -5,7 +5,7 @@ import { user } from '@/src/modules/user/user.schema';
 export const role = pgTable(
   'roles',
   {
-    id: uuid('id').defaultRandom().primaryKey(),
+    id: uuid('id').primaryKey().defaultRandom(),
     name: text('name').notNull().unique(),
     created_by: uuid('created_by').references(() => user.id, { onDelete: 'set null' }),
     created_at: timestamp('created_at').notNull().defaultNow(),

@@ -16,7 +16,7 @@ export const verificationTokenTypeEnum = pgEnum('verification_token_type', [
 export const verificationToken = pgTable(
   'verification_tokens',
   {
-    id: uuid('id').defaultRandom().primaryKey(),
+    id: uuid('id').primaryKey().defaultRandom(),
     email: text('email').notNull(),
     expired_at: timestamp('expired_at').notNull().default(sql`NOW() + INTERVAL '5 minutes'`),
     status: verificationTokenStatusEnum('status').notNull().default('unverified'),

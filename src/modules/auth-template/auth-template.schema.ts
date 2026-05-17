@@ -5,7 +5,7 @@ import { user } from '@/src/modules/user/user.schema';
 export const authTemplate = pgTable(
   'auth_templates',
   {
-    id: uuid('id').defaultRandom().primaryKey(),
+    id: uuid('id').primaryKey().defaultRandom(),
     body: text('body').notNull(),
     event: text('event').notNull().unique(),
     subject: text('subject').notNull(),

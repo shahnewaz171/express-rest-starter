@@ -9,13 +9,18 @@ import {
   uuid
 } from 'drizzle-orm/pg-core';
 
-export const userStatusEnum = pgEnum('status', ['active', 'inactive', 'invited', 'unverified']);
+export const userStatusEnum = pgEnum('user_status', [
+  'active',
+  'inactive',
+  'invited',
+  'unverified'
+]);
 export type UserStatus = (typeof userStatusEnum.enumValues)[number];
 
 export const user = pgTable(
   'users',
   {
-    id: uuid('id').defaultRandom().primaryKey(),
+    id: uuid('id').primaryKey().defaultRandom(),
     email: text('email').notNull().unique(),
     first_name: text('first_name'),
     last_name: text('last_name'),

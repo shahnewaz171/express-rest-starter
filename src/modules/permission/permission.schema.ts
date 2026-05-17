@@ -5,7 +5,7 @@ import { user } from '@/src/modules/user/user.schema';
 export const permission = pgTable(
   'permissions',
   {
-    id: uuid('id').defaultRandom().primaryKey(),
+    id: uuid('id').primaryKey().defaultRandom(),
     action: text('action').notNull(),
     module: text('module').notNull(),
     created_by: uuid('created_by').references(() => user.id, { onDelete: 'set null' }),
