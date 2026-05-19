@@ -18,7 +18,7 @@ interface GetLatestVerificationTokenParams {
   user_id?: string | undefined;
 }
 
-export const getLatestVerificationToken = async (params: GetLatestVerificationTokenParams = {}) => {
+const getLatestVerificationToken = async (params: GetLatestVerificationTokenParams = {}) => {
   const { email, status = 'unverified', type, user_id } = params;
 
   const conditions: SQL[] = [eq(verificationToken.status, status)];

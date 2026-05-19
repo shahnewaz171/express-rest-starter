@@ -322,7 +322,8 @@ export const changeEmailByUser = async (
   const vData1: CreateVerificationTokenInput = {
     email: params.new_email,
     type: 'user_verification',
-    user_id: existingUser.id
+    user_id: existingUser.id,
+    event: 'send_change_email_token'
   };
   if (existingUser.first_name) vData1.first_name = existingUser.first_name;
   if (existingUser.last_name) vData1.last_name = existingUser.last_name;

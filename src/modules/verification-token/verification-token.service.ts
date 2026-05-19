@@ -83,7 +83,8 @@ export const createAVerificationTokenForUser = async (
   }
 
   const event =
-    type === 'forgot_password' ? 'send_forgot_password_token' : 'send_user_verification_token';
+    params.event ??
+    (type === 'forgot_password' ? 'send_forgot_password_token' : 'send_user_verification_token');
 
   await notificationService.sendNotification({
     event,

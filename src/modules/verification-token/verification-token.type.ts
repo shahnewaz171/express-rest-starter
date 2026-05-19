@@ -7,6 +7,7 @@ export interface CreateVerificationTokenInput {
   last_name?: string;
   type: VerificationTokenType;
   user_id: string;
+  event?: string;
 }
 
 export interface ValidateVerificationTokenInput {

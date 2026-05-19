@@ -15,6 +15,11 @@ export default async function seedAuthTemplate(db: DB) {
         event: 'send_forgot_password_token',
         body: '<h1>Hello, {{username}}!</h1><p>We are feeling sorry to know that you forgot your password. Please verify your email with this OTP: <strong>{{token}}</strong> to reset the password</p><p>If you did not request this, please ignore this email.</p><p>Best regards,<br/>The Team</p>',
         subject: 'Password Reset Request'
+      },
+      {
+        event: 'send_change_email_token',
+        body: '<h1>Hello, {{username}}!</h1><p>You requested to change your email address. Please confirm your new email with this OTP: <strong>{{token}}</strong>.</p><p>If you did not request this change, please ignore this email or contact support.</p><p>Best regards,<br/>The Team</p>',
+        subject: 'Confirm Your Email Change'
       }
     ])
     .onConflictDoNothing({ target: [authTemplate.event] });
