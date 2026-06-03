@@ -1,5 +1,5 @@
 import { and, eq, or, type SQL, sql } from 'drizzle-orm';
-import { omit, slice } from 'lodash-es';
+import omit from 'lodash/omit';
 
 import { CustomError } from '@/src/utils/error';
 
@@ -28,15 +28,12 @@ import * as verificationTokenService from '@/src/modules/verification-token/veri
 import type { CreateVerificationTokenInput } from '@/src/modules/verification-token/verification-token.type';
 
 import type { DB } from '@/src/db';
-import { db } from '@/src/db';
 
 export const createAUser = async (
-  data: { email: string; first_name?: string; last_name?: string; password?: string },
-  tx?: DB
+  data: { email: string; first_name: string; last_name: string; password: string },
+  tx: DB
 ) => {
-  const executor = tx ?? db;
-
-  const [createdUser] = await executor.insert(user).values(data).returning();
+  const [createdUser] = await tx.insert(user).values(data).returning();
 
   if (!createdUser) {
     throw new CustomError(500, 'COULD_NOT_CREATE_USER');
@@ -44,10 +41,8 @@ export const createAUser = async (
   return createdUser;
 };
 
-export const updateAUser = async (id: string, data: Partial<GetUsersParams>, tx?: DB) => {
-  const executor = tx ?? db;
-
-  const [updatedUser] = await executor.update(user).set(data).where(eq(user.id, id)).returning();
+export const updateAUser = async (id: string, data: Partial<GetUsersParams>, tx: DB) => {
+  const [updatedUser] = await tx.update(user).set(data).where(eq(user.id, id)).returning();
 
   if (!updatedUser) {
     throw new CustomError(404, 'USER_NOT_FOUND');
@@ -55,10 +50,8 @@ export const updateAUser = async (id: string, data: Partial<GetUsersParams>, tx?
   return updatedUser;
 };
 
-export const deleteAUser = async (id: string, tx?: DB) => {
-  const executor = tx ?? db;
-
-  const [deletedUser] = await executor.delete(user).where(eq(user.id, id)).returning();
+export const deleteAUser = async (id: string, tx: DB) => {
+  const [deletedUser] = await tx.delete(user).where(eq(user.id, id)).returning();
 
   if (!deletedUser) {
     throw new CustomError(404, 'USER_NOT_FOUND');
@@ -66,7 +59,7 @@ export const deleteAUser = async (id: string, tx?: DB) => {
   return deletedUser;
 };
 
-export const registerUser = async (params: RegisterUserInput, tx?: DB) => {
+export const registerUser = async (params: RegisterUserInput, tx: DB) => {
   const parsed = registerSchema.safeParse(params);
   if (!parsed.success) {
     throw new CustomError(400, parsed.error.issues.map((i) => i.message).join(', '));
@@ -78,9 +71,7 @@ export const registerUser = async (params: RegisterUserInput, tx?: DB) => {
     throw new CustomError(400, 'PASSWORD_DID_NOT_CONFORM_OUR_POLICY');
   }
 
-  const executor = tx ?? db;
-
-  const existingUser = await executor.query.user.findFirst({
+  const existingUser = await tx.query.user.findFirst({
     where: eq(user.email, email)
   });
 
@@ -88,9 +79,9 @@ export const registerUser = async (params: RegisterUserInput, tx?: DB) => {
     throw new CustomError(400, 'EMAIL_IS_ALREADY_ASSOCIATED_WITH_A_USER');
   }
 
-  const hashedPassword = commonService.generateHashPassword(password);
+  const hashedPassword = await commonService.generateHashPassword(password);
 
-  const [createdUser] = await executor
+  const [createdUser] = await tx
     .insert(user)
     .values({
       email,
@@ -104,7 +95,7 @@ export const registerUser = async (params: RegisterUserInput, tx?: DB) => {
     throw new CustomError(500, 'COULD_NOT_CREATE_USER');
   }
 
-  await roleUserService.assignARoleToUserByName({ role_name: 'user', user_id: createdUser.id });
+  await roleUserService.assignARoleToUserByName({ role_name: 'user', user_id: createdUser.id }, tx);
 
   const verificationData: CreateVerificationTokenInput = {
     email,
@@ -162,7 +153,7 @@ export const loginUser = async (params: LoginUserInput, tx: DB) => {
     throw new CustomError(400, 'PASSWORD_IS_INCORRECT');
   }
 
-  const isPasswordValid = commonService.compareHashPassword(password, existingUser.password);
+  const isPasswordValid = await commonService.compareHashPassword(password, existingUser.password);
   if (!isPasswordValid) {
     throw new CustomError(400, 'PASSWORD_IS_INCORRECT');
   }
@@ -182,7 +173,7 @@ export const loginUser = async (params: LoginUserInput, tx: DB) => {
   };
 };
 
-export const logoutAUser = async (params: { access_token: string }, tx?: DB) => {
+export const logoutAUser = async (params: { access_token: string }, tx: DB) => {
   const deleted = await authTokenService.revokeAnAuthTokenForUser(
     { token: params.access_token, type: 'access_token' },
     tx
@@ -191,24 +182,22 @@ export const logoutAUser = async (params: { access_token: string }, tx?: DB) => 
   return deleted;
 };
 
-export const verifyUserEmail = async (params: { email: string; token: string }, tx?: DB) => {
+export const verifyUserEmail = async (params: { email: string; token: string }, tx: DB) => {
   const emailParsed = emailSchema.safeParse(params.email);
   if (!emailParsed.success) {
     throw new CustomError(400, 'INVALID_EMAIL');
   }
 
-  const executor = tx ?? db;
-
   const existingToken = await verificationTokenService.validateVerificationTokenForUser(
     {
-      email: params.email,
+      email: emailParsed.data,
       token: params.token,
       type: 'user_verification'
     },
     tx
   );
 
-  const existingUser = await executor.query.user.findFirst({
+  const existingUser = await tx.query.user.findFirst({
     where: eq(user.id, existingToken.user_id)
   });
 
@@ -216,7 +205,7 @@ export const verifyUserEmail = async (params: { email: string; token: string }, 
     throw new CustomError(404, 'USER_DOES_NOT_EXIST');
   }
 
-  const [updatedUser] = await executor
+  const [updatedUser] = await tx
     .update(user)
     .set({ status: 'active' })
     .where(eq(user.id, existingToken.user_id))
@@ -225,16 +214,14 @@ export const verifyUserEmail = async (params: { email: string; token: string }, 
   return updatedUser;
 };
 
-export const resendUserVerificationEmail = async (params: { email: string }, tx?: DB) => {
+export const resendUserVerificationEmail = async (params: { email: string }, tx: DB) => {
   const emailParsed = emailSchema.safeParse(params.email);
   if (!emailParsed.success) {
     throw new CustomError(400, 'INVALID_EMAIL');
   }
 
-  const executor = tx ?? db;
-
-  const existingUser = await executor.query.user.findFirst({
-    where: or(eq(user.email, params.email), eq(user.new_email, params.email))
+  const existingUser = await tx.query.user.findFirst({
+    where: or(eq(user.email, emailParsed.data), eq(user.new_email, emailParsed.data))
   });
 
   if (!existingUser) {
@@ -247,7 +234,7 @@ export const resendUserVerificationEmail = async (params: { email: string }, tx?
 
   const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
 
-  const recentTokens = await executor.query.verificationToken.findMany({
+  const recentTokens = await tx.query.verificationToken.findMany({
     where: and(
       eq(verificationToken.user_id, existingUser.id),
       eq(verificationToken.type, 'user_verification'),
@@ -259,13 +246,12 @@ export const resendUserVerificationEmail = async (params: { email: string }, tx?
     throw new CustomError(429, 'TOO_MANY_RESEND_VERIFICATION_REQUESTS');
   }
 
-  await verificationTokenService.updateVerificationTokens(
+  await verificationTokenService.deleteVerificationTokens(
     and(
       eq(verificationToken.user_id, existingUser.id),
       eq(verificationToken.type, 'user_verification'),
       eq(verificationToken.status, 'unverified')
     ) as SQL,
-    { status: 'cancelled' },
     tx
   );
 
@@ -282,18 +268,13 @@ export const resendUserVerificationEmail = async (params: { email: string }, tx?
   return created;
 };
 
-export const changeEmailByUser = async (
-  params: { user_id: string; new_email: string },
-  tx?: DB
-) => {
+export const changeEmailByUser = async (params: { user_id: string; new_email: string }, tx: DB) => {
   const emailParsed = emailSchema.safeParse(params.new_email);
   if (!emailParsed.success) {
     throw new CustomError(400, 'INVALID_EMAIL');
   }
 
-  const executor = tx ?? db;
-
-  const existingUser = await executor.query.user.findFirst({
+  const existingUser = await tx.query.user.findFirst({
     where: eq(user.id, params.user_id)
   });
 
@@ -305,22 +286,22 @@ export const changeEmailByUser = async (
     throw new CustomError(400, `USER_IS_${existingUser.status}`);
   }
 
-  const emailExists = await executor.query.user.findFirst({
-    where: eq(user.email, params.new_email)
+  const emailExists = await tx.query.user.findFirst({
+    where: eq(user.email, emailParsed.data)
   });
 
   if (emailExists) {
     throw new CustomError(400, 'EMAIL_IS_ALREADY_ASSOCIATED_WITH_A_USER');
   }
 
-  const [updatedUser] = await executor
+  const [updatedUser] = await tx
     .update(user)
-    .set({ new_email: params.new_email })
+    .set({ new_email: emailParsed.data })
     .where(eq(user.id, params.user_id))
     .returning();
 
   const vData1: CreateVerificationTokenInput = {
-    email: params.new_email,
+    email: emailParsed.data,
     type: 'user_verification',
     user_id: existingUser.id,
     event: 'send_change_email_token'
@@ -333,16 +314,14 @@ export const changeEmailByUser = async (
   return updatedUser;
 };
 
-export const cancelChangeEmailByUser = async (params: { email: string }, tx?: DB) => {
+export const cancelChangeEmailByUser = async (params: { email: string }, tx: DB) => {
   const emailParsed = emailSchema.safeParse(params.email);
   if (!emailParsed.success) {
     throw new CustomError(400, 'INVALID_EMAIL');
   }
 
-  const executor = tx ?? db;
-
-  const existingUser = await executor.query.user.findFirst({
-    where: eq(user.new_email, params.email)
+  const existingUser = await tx.query.user.findFirst({
+    where: eq(user.new_email, emailParsed.data)
   });
 
   if (!existingUser) {
@@ -353,7 +332,7 @@ export const cancelChangeEmailByUser = async (params: { email: string }, tx?: DB
     throw new CustomError(400, `USER_IS_${existingUser.status}`);
   }
 
-  const [updatedUser] = await executor
+  const [updatedUser] = await tx
     .update(user)
     .set({ new_email: null })
     .where(eq(user.id, existingUser.id))
@@ -377,11 +356,9 @@ export const cancelChangeEmailByUser = async (params: { email: string }, tx?: DB
 
 export const verifyChangeEmailByUser = async (
   params: { user_id: string; token: string },
-  tx?: DB
+  tx: DB
 ) => {
-  const executor = tx ?? db;
-
-  const existingUser = await executor.query.user.findFirst({
+  const existingUser = await tx.query.user.findFirst({
     where: eq(user.id, params.user_id)
   });
 
@@ -407,7 +384,7 @@ export const verifyChangeEmailByUser = async (
     tx
   );
 
-  const [updatedUser] = await executor
+  const [updatedUser] = await tx
     .update(user)
     .set({ email: existingUser.new_email, new_email: null })
     .where(eq(user.id, params.user_id))
@@ -418,16 +395,14 @@ export const verifyChangeEmailByUser = async (
 
 export const setUserEmailByAdmin = async (
   params: { user_id: string; new_email: string },
-  tx?: DB
+  tx: DB
 ) => {
   const emailParsed = emailSchema.safeParse(params.new_email);
   if (!emailParsed.success) {
     throw new CustomError(400, 'INVALID_EMAIL');
   }
 
-  const executor = tx ?? db;
-
-  const existingUser = await executor.query.user.findFirst({
+  const existingUser = await tx.query.user.findFirst({
     where: eq(user.id, params.user_id)
   });
 
@@ -435,17 +410,17 @@ export const setUserEmailByAdmin = async (
     throw new CustomError(404, 'USER_NOT_FOUND');
   }
 
-  const emailExists = await executor.query.user.findFirst({
-    where: eq(user.email, params.new_email)
+  const emailExists = await tx.query.user.findFirst({
+    where: eq(user.email, emailParsed.data)
   });
 
   if (emailExists) {
     throw new CustomError(400, 'EMAIL_ALREADY_EXISTS');
   }
 
-  const [updatedUser] = await executor
+  const [updatedUser] = await tx
     .update(user)
-    .set({ email: params.new_email, new_email: null })
+    .set({ email: emailParsed.data, new_email: null })
     .where(eq(user.id, params.user_id))
     .returning();
 
@@ -454,7 +429,7 @@ export const setUserEmailByAdmin = async (
 
 export const changePasswordByUser = async (
   params: { user_id: string; old_password: string; new_password: string },
-  tx?: DB
+  tx: DB
 ) => {
   const parsed = changePasswordSchema.safeParse({
     old_password: params.old_password,
@@ -464,9 +439,7 @@ export const changePasswordByUser = async (
     throw new CustomError(400, parsed.error.issues.map((i) => i.message).join(', '));
   }
 
-  const executor = tx ?? db;
-
-  const existingUser = await executor.query.user.findFirst({
+  const existingUser = await tx.query.user.findFirst({
     where: eq(user.id, params.user_id)
   });
 
@@ -482,7 +455,7 @@ export const changePasswordByUser = async (
     throw new CustomError(400, 'PASSWORD_NOT_SET');
   }
 
-  const isOldPasswordValid = commonService.compareHashPassword(
+  const isOldPasswordValid = await commonService.compareHashPassword(
     parsed.data.old_password,
     existingUser.password
   );
@@ -490,7 +463,7 @@ export const changePasswordByUser = async (
     throw new CustomError(400, 'OLD_PASSWORD_IS_INCORRECT');
   }
 
-  const isOldPassword = commonService.checkOldPasswords(
+  const isOldPassword = await commonService.checkOldPasswords(
     parsed.data.new_password,
     existingUser.old_passwords ?? []
   );
@@ -498,11 +471,13 @@ export const changePasswordByUser = async (
     throw new CustomError(400, 'PASSWORD_IS_ALREADY_USED_BEFORE');
   }
 
-  const hashedPassword = commonService.generateHashPassword(parsed.data.new_password);
+  const hashedPassword = await commonService.generateHashPassword(parsed.data.new_password);
 
-  const oldPasswords = [...slice(existingUser.old_passwords ?? [], 1, 3), hashedPassword];
+  const oldPasswords = [...(existingUser.old_passwords ?? []), existingUser.password]
+    .filter(Boolean)
+    .slice(-5);
 
-  const [updatedUser] = await executor
+  const [updatedUser] = await tx
     .update(user)
     .set({ password: hashedPassword, old_passwords: oldPasswords })
     .where(eq(user.id, params.user_id))
@@ -515,16 +490,14 @@ export const changePasswordByUser = async (
 
 export const changePasswordByAdmin = async (
   params: { user_id: string; password: string },
-  tx?: DB
+  tx: DB
 ) => {
   const parsed = passwordSchema.safeParse(params.password);
   if (!parsed.success) {
     throw new CustomError(400, parsed.error.issues.map((i) => i.message).join(', '));
   }
 
-  const executor = tx ?? db;
-
-  const existingUser = await executor.query.user.findFirst({
+  const existingUser = await tx.query.user.findFirst({
     where: eq(user.id, params.user_id)
   });
 
@@ -532,11 +505,13 @@ export const changePasswordByAdmin = async (
     throw new CustomError(404, 'USER_NOT_FOUND');
   }
 
-  const hashedPassword = commonService.generateHashPassword(params.password);
+  const hashedPassword = await commonService.generateHashPassword(params.password);
 
-  const oldPasswords = [...slice(existingUser.old_passwords ?? [], 1, 3), hashedPassword];
+  const oldPasswords = [...(existingUser.old_passwords ?? []), existingUser.password]
+    .filter(Boolean)
+    .slice(-5);
 
-  const [updatedUser] = await executor
+  const [updatedUser] = await tx
     .update(user)
     .set({ password: hashedPassword, old_passwords: oldPasswords })
     .where(eq(user.id, params.user_id))
@@ -547,15 +522,13 @@ export const changePasswordByAdmin = async (
   return updatedUser;
 };
 
-export const forgotPassword = async (params: { email: string }, tx?: DB) => {
+export const forgotPassword = async (params: { email: string }, tx: DB) => {
   const parsed = forgotPasswordSchema.safeParse(params);
   if (!parsed.success) {
     throw new CustomError(400, parsed.error.issues.map((i) => i.message).join(', '));
   }
 
-  const executor = tx ?? db;
-
-  const existingUser = await executor.query.user.findFirst({
+  const existingUser = await tx.query.user.findFirst({
     where: eq(user.email, parsed.data.email)
   });
 
@@ -565,7 +538,7 @@ export const forgotPassword = async (params: { email: string }, tx?: DB) => {
 
   const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
 
-  const recentTokens = await executor.query.verificationToken.findMany({
+  const recentTokens = await tx.query.verificationToken.findMany({
     where: and(
       eq(verificationToken.user_id, existingUser.id),
       eq(verificationToken.type, 'forgot_password'),
@@ -577,13 +550,12 @@ export const forgotPassword = async (params: { email: string }, tx?: DB) => {
     throw new CustomError(429, 'TOO_MANY_FORGOT_PASSWORD_REQUESTS');
   }
 
-  await verificationTokenService.updateVerificationTokens(
+  await verificationTokenService.deleteVerificationTokens(
     and(
       eq(verificationToken.user_id, existingUser.id),
       eq(verificationToken.type, 'forgot_password'),
       eq(verificationToken.status, 'unverified')
     ) as SQL,
-    { status: 'cancelled' },
     tx
   );
 
@@ -600,15 +572,13 @@ export const forgotPassword = async (params: { email: string }, tx?: DB) => {
   return created;
 };
 
-export const retryForgotPassword = async (params: { email: string }, tx?: DB) => {
+export const retryForgotPassword = async (params: { email: string }, tx: DB) => {
   const parsed = forgotPasswordSchema.safeParse(params);
   if (!parsed.success) {
     throw new CustomError(400, parsed.error.issues.map((i) => i.message).join(', '));
   }
 
-  const executor = tx ?? db;
-
-  const existingUser = await executor.query.user.findFirst({
+  const existingUser = await tx.query.user.findFirst({
     where: eq(user.email, parsed.data.email)
   });
 
@@ -618,7 +588,7 @@ export const retryForgotPassword = async (params: { email: string }, tx?: DB) =>
 
   const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
 
-  const recentTokens = await executor.query.verificationToken.findMany({
+  const recentTokens = await tx.query.verificationToken.findMany({
     where: and(
       eq(verificationToken.user_id, existingUser.id),
       eq(verificationToken.type, 'forgot_password'),
@@ -630,13 +600,12 @@ export const retryForgotPassword = async (params: { email: string }, tx?: DB) =>
     throw new CustomError(429, 'TOO_MANY_FORGOT_PASSWORD_REQUESTS');
   }
 
-  await verificationTokenService.updateVerificationTokens(
+  await verificationTokenService.deleteVerificationTokens(
     and(
       eq(verificationToken.user_id, existingUser.id),
       eq(verificationToken.type, 'forgot_password'),
       eq(verificationToken.status, 'unverified')
     ) as SQL,
-    { status: 'cancelled' },
     tx
   );
 
@@ -655,7 +624,7 @@ export const retryForgotPassword = async (params: { email: string }, tx?: DB) =>
 
 export const verifyForgotPasswordCode = async (
   params: { email: string; token: string },
-  _tx?: DB
+  tx: DB
 ) => {
   const emailParsed = emailSchema.safeParse(params.email);
   if (!emailParsed.success) {
@@ -663,8 +632,9 @@ export const verifyForgotPasswordCode = async (
   }
 
   const existingToken = await verificationTokenHelper.getAVerificationToken({
+    tx,
     where: and(
-      eq(verificationToken.email, params.email),
+      eq(verificationToken.email, emailParsed.data),
       eq(verificationToken.token, params.token),
       eq(verificationToken.type, 'forgot_password'),
       eq(verificationToken.status, 'unverified')
@@ -675,7 +645,7 @@ export const verifyForgotPasswordCode = async (
     throw new CustomError(400, 'INVALID_VERIFICATION_TOKEN');
   }
 
-  if (new Date(existingToken.expired_at) < new Date()) {
+  if (new Date(existingToken.expires_at) < new Date()) {
     throw new CustomError(400, 'VERIFICATION_TOKEN_EXPIRED');
   }
 
@@ -684,7 +654,7 @@ export const verifyForgotPasswordCode = async (
 
 export const verifyForgotPassword = async (
   params: { email: string; password: string; token: string },
-  tx?: DB
+  tx: DB
 ) => {
   const parsed = verifyForgotPasswordSchema.safeParse(params);
   if (!parsed.success) {
@@ -695,9 +665,7 @@ export const verifyForgotPassword = async (
     throw new CustomError(400, 'PASSWORD_DID_NOT_CONFORM_OUR_POLICY');
   }
 
-  const executor = tx ?? db;
-
-  const existingUser = await executor.query.user.findFirst({
+  const existingUser = await tx.query.user.findFirst({
     where: eq(user.email, parsed.data.email)
   });
 
@@ -714,12 +682,12 @@ export const verifyForgotPassword = async (
     tx
   );
 
-  const isCurrentPassword = commonService.compareHashPassword(
+  const isCurrentPassword = await commonService.compareHashPassword(
     parsed.data.password,
     existingUser.password ?? ''
   );
 
-  const isOldPassword = commonService.checkOldPasswords(
+  const isOldPassword = await commonService.checkOldPasswords(
     parsed.data.password,
     existingUser.old_passwords ?? []
   );
@@ -728,13 +696,13 @@ export const verifyForgotPassword = async (
     throw new CustomError(400, 'PASSWORD_IS_ALREADY_USED_BEFORE');
   }
 
-  const hashedPassword = commonService.generateHashPassword(parsed.data.password);
+  const hashedPassword = await commonService.generateHashPassword(parsed.data.password);
 
   const oldPasswords = [...(existingUser.old_passwords ?? []), existingUser.password ?? '']
     .filter(Boolean)
     .slice(-5);
 
-  const [updatedUser] = await executor
+  const [updatedUser] = await tx
     .update(user)
     .set({ password: hashedPassword, old_passwords: oldPasswords })
     .where(eq(user.id, existingUser.id))
@@ -745,17 +713,12 @@ export const verifyForgotPassword = async (
   return updatedUser;
 };
 
-export const verifyUserPassword = async (
-  params: { user_id: string; password: string },
-  tx?: DB
-) => {
+export const verifyUserPassword = async (params: { user_id: string; password: string }, tx: DB) => {
   if (!params.password) {
     throw new CustomError(400, 'PASSWORD_IS_REQUIRED');
   }
 
-  const executor = tx ?? db;
-
-  const existingUser = await executor.query.user.findFirst({
+  const existingUser = await tx.query.user.findFirst({
     where: eq(user.id, params.user_id)
   });
 
@@ -767,7 +730,7 @@ export const verifyUserPassword = async (
     throw new CustomError(400, 'PASSWORD_NOT_SET');
   }
 
-  const isValid = commonService.compareHashPassword(params.password, existingUser.password);
+  const isValid = await commonService.compareHashPassword(params.password, existingUser.password);
 
   if (!isValid) {
     return { message: 'PASSWORD_IS_INCORRECT', success: false };
@@ -778,27 +741,24 @@ export const verifyUserPassword = async (
 
 export const refreshTokensForUser = async (
   params: { access_token: string; refresh_token: string },
-  tx?: DB
+  tx: DB
 ) => {
   const parsed = refreshTokenSchema.safeParse(params);
   if (!parsed.success) {
     throw new CustomError(400, parsed.error.issues.map((i) => i.message).join(', '));
   }
 
-  const decoded = commonService.decodeJWTToken(parsed.data.access_token) as {
-    user_id?: string;
-    roles?: string[];
-  } | null;
+  const { user_id, roles } = commonService.decodeJWTToken(parsed.data.access_token) || {};
 
-  if (!decoded?.user_id) {
+  if (!user_id) {
     throw new CustomError(400, 'INVALID_ACCESS_TOKEN');
   }
 
   const freshUser = await userHelper.getAuthUserWithRolesAndPermissions({
-    roles: decoded.roles ?? [],
-    user_id: decoded.user_id
+    roles,
+    user_id,
+    tx
   });
-
   if (!freshUser) {
     throw new CustomError(404, 'USER_NOT_FOUND');
   }
@@ -807,7 +767,7 @@ export const refreshTokensForUser = async (
     {
       refresh_token: parsed.data.refresh_token,
       roles: freshUser.roles,
-      user_id: decoded.user_id
+      user_id
     },
     tx
   );
@@ -817,7 +777,7 @@ export const refreshTokensForUser = async (
 
 export const verifyTokenForUser = async (
   params: { token: string; type: 'access_token' | 'refresh_token' },
-  tx?: DB
+  tx: DB
 ) => {
   const result = await authTokenService.verifyAnAuthTokenForUser(params, tx);
 

@@ -1,4 +1,4 @@
-import { sql } from 'drizzle-orm';
+import dayjs from 'dayjs';
 import { index, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 import { user } from '@/src/modules/user/user.schema';
@@ -18,15 +18,20 @@ export const verificationToken = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     email: text('email').notNull(),
-    expired_at: timestamp('expired_at').notNull().default(sql`NOW() + INTERVAL '5 minutes'`),
+    expires_at: timestamp('expires_at')
+      .notNull()
+      .$defaultFn(() => dayjs().add(5, 'minute').toDate()),
     status: verificationTokenStatusEnum('status').notNull().default('unverified'),
-    token: text('token').notNull(),
+    token: text('token').notNull().unique(),
     type: verificationTokenTypeEnum('type').notNull().default('user_verification'),
     user_id: uuid('user_id')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
     created_at: timestamp('created_at').notNull().defaultNow(),
-    updated_at: timestamp('updated_at').notNull().defaultNow()
+    updated_at: timestamp('updated_at')
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date())
   },
   (table) => [
     index('verification_tokens_email_token_user_id_idx').on(
@@ -34,7 +39,6 @@ export const verificationToken = pgTable(
       table.token,
       table.user_id
     ),
-    index('verification_tokens_email_type_status_idx').on(table.email, table.type, table.status),
     index('verification_tokens_created_at_idx').on(table.created_at),
     index('verification_tokens_updated_at_idx').on(table.updated_at)
   ]

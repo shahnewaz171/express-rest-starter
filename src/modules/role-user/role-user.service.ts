@@ -5,6 +5,7 @@ import { CustomError } from '@/src/utils/error';
 
 import { uuidSchema } from '@/src/modules/common/common.validation';
 import { role } from '@/src/modules/role/role.schema';
+import type { RoleName } from '@/src/modules/role/role.type';
 import { roleUser } from '@/src/modules/role-user/role-user.schema';
 import type {
   CreateRoleUserInput,
@@ -13,7 +14,7 @@ import type {
 import { user } from '@/src/modules/user/user.schema';
 
 import type { DB } from '@/src/db';
-import { db, useTransaction } from '@/src/db';
+import { useTransaction } from '@/src/db';
 
 const createRoleUserSchema = z.object({
   role_id: uuidSchema,
@@ -55,7 +56,7 @@ export const deleteARoleUser = async (id: string) =>
     return deleted;
   });
 
-export const createARoleUserForMutation = async (params: CreateRoleUserInput, tx: DB = db) => {
+export const createARoleUserForMutation = async (params: CreateRoleUserInput, tx: DB) => {
   const parsed = createRoleUserSchema.safeParse(params);
 
   if (!parsed.success) {
@@ -100,7 +101,7 @@ export const createARoleUserForMutation = async (params: CreateRoleUserInput, tx
 
 export const updateARoleUserForMutation = async (
   params: { entity_id: string; role_id?: string; user_id?: string },
-  tx: DB = db
+  tx: DB
 ) => {
   const parsed = updateRoleUserSchema.safeParse(params);
 
@@ -169,8 +170,8 @@ export const deleteARoleUserForMutation = async (tx: DB, id: string) => {
 };
 
 export const assignARoleToUserByName = async (
-  params: { role_name: string; user_id: string },
-  tx: DB = db
+  params: { role_name: RoleName; user_id: string },
+  tx: DB
 ) => {
   const foundRole = await tx.query.role.findFirst({
     where: eq(role.name, params.role_name)
@@ -197,8 +198,8 @@ export const assignARoleToUserByName = async (
 };
 
 export const revokeARoleFromUserByName = async (
-  params: { role_name: string; user_id: string },
-  tx: DB = db
+  params: { role_name: RoleName; user_id: string },
+  tx: DB
 ) => {
   const foundRole = await tx.query.role.findFirst({
     where: eq(role.name, params.role_name)

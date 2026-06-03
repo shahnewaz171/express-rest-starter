@@ -14,7 +14,10 @@ export const roleUser = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
     created_at: timestamp('created_at').notNull().defaultNow(),
-    updated_at: timestamp('updated_at').notNull().defaultNow()
+    updated_at: timestamp('updated_at')
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date())
   },
   (table) => [
     uniqueIndex('role_users_role_id_user_id_idx').on(table.role_id, table.user_id),

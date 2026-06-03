@@ -6,6 +6,8 @@ import { commonHelper, permissionHelper } from '@/src/modules/helpers';
 import { permissionService } from '@/src/modules/services';
 import type { AuthRequest } from '@/src/modules/user/user.type';
 
+import { useTransaction } from '@/src/db';
+
 export const permissionController = {
   createAPermission: async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
@@ -13,10 +15,15 @@ export const permissionController = {
       if (!userId) {
         throw new CustomError(401, 'UNAUTHORIZED');
       }
-
-      const newPermission = await permissionService.createAPermissionForMutation(req.body, {
-        user_id: userId
-      });
+      const newPermission = await useTransaction(async (tx) =>
+        permissionService.createAPermissionForMutation(
+          req.body,
+          {
+            user_id: userId
+          },
+          tx
+        )
+      );
       res.status(201).json({ data: newPermission });
     } catch (err) {
       next(err);
@@ -25,9 +32,12 @@ export const permissionController = {
 
   updateAPermission: async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-      const updatedPermission = await permissionService.updateAPermissionForMutation(
-        { entity_id: String(req.params.entity_id), data: req.body },
-        { user_id: req.user?.id ?? '' }
+      const updatedPermission = await useTransaction(async (tx) =>
+        permissionService.updateAPermissionForMutation(
+          { entity_id: String(req.params.entity_id), data: req.body },
+          { user_id: req.user?.id ?? '' },
+          tx
+        )
       );
       res.json({ data: updatedPermission });
     } catch (err) {
@@ -37,9 +47,14 @@ export const permissionController = {
 
   deleteAPermission: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const deletedPermission = await permissionService.deleteAPermissionForMutation({
-        entity_id: String(req.params.entity_id)
-      });
+      const deletedPermission = await useTransaction(async (tx) =>
+        permissionService.deleteAPermissionForMutation(
+          {
+            entity_id: String(req.params.entity_id)
+          },
+          tx
+        )
+      );
       res.json({ data: deletedPermission });
     } catch (err) {
       next(err);

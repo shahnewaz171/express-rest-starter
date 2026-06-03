@@ -11,12 +11,9 @@ import type {
 } from '@/src/modules/verification-token/verification-token.type';
 
 import type { DB } from '@/src/db';
-import { db } from '@/src/db';
 
-export const createAVerificationToken = async (data: NewVerificationToken, tx?: DB) => {
-  const executor = tx ?? db;
-
-  const [created] = await executor.insert(verificationToken).values(data).returning();
+export const createAVerificationToken = async (data: NewVerificationToken, tx: DB) => {
+  const [created] = await tx.insert(verificationToken).values(data).returning();
 
   return created;
 };
@@ -24,11 +21,9 @@ export const createAVerificationToken = async (data: NewVerificationToken, tx?: 
 export const updateAVerificationToken = async (
   id: string,
   data: Partial<NewVerificationToken>,
-  tx?: DB
+  tx: DB
 ) => {
-  const executor = tx ?? db;
-
-  const [updated] = await executor
+  const [updated] = await tx
     .update(verificationToken)
     .set(data)
     .where(eq(verificationToken.id, id))
@@ -40,19 +35,15 @@ export const updateAVerificationToken = async (
 export const updateVerificationTokens = async (
   where: SQL,
   data: Partial<NewVerificationToken>,
-  tx?: DB
+  tx: DB
 ) => {
-  const executor = tx ?? db;
-
-  const results = await executor.update(verificationToken).set(data).where(where).returning();
+  const results = await tx.update(verificationToken).set(data).where(where).returning();
 
   return results;
 };
 
-export const deleteAVerificationToken = async (id: string, tx?: DB) => {
-  const executor = tx ?? db;
-
-  const [deleted] = await executor
+export const deleteAVerificationToken = async (id: string, tx: DB) => {
+  const [deleted] = await tx
     .delete(verificationToken)
     .where(eq(verificationToken.id, id))
     .returning();
@@ -60,17 +51,15 @@ export const deleteAVerificationToken = async (id: string, tx?: DB) => {
   return deleted;
 };
 
-export const deleteVerificationTokens = async (where: SQL, tx?: DB) => {
-  const executor = tx ?? db;
-
-  const results = await executor.delete(verificationToken).where(where).returning();
+export const deleteVerificationTokens = async (where: SQL, tx: DB) => {
+  const results = await tx.delete(verificationToken).where(where).returning();
 
   return results;
 };
 
 export const createAVerificationTokenForUser = async (
   params: CreateVerificationTokenInput,
-  tx?: DB
+  tx: DB
 ) => {
   const { email, first_name, last_name, type, user_id } = params;
 
@@ -102,7 +91,7 @@ export const createAVerificationTokenForUser = async (
 
 export const validateVerificationTokenForUser = async (
   params: ValidateVerificationTokenInput,
-  tx?: DB
+  tx: DB
 ) => {
   const { email, token, type, user_id } = params;
 
@@ -122,15 +111,13 @@ export const validateVerificationTokenForUser = async (
 
   const where = and(...conditions) as SQL;
 
-  const executor = tx ?? db;
-
-  const existingToken = await executor.query.verificationToken.findFirst({ where });
+  const existingToken = await tx.query.verificationToken.findFirst({ where });
 
   if (!existingToken) {
     throw new Error('OTP_IS_NOT_VALID');
   }
 
-  if (dayjs(existingToken.expired_at).isBefore(dayjs())) {
+  if (dayjs(existingToken.expires_at).isBefore(dayjs())) {
     throw new Error('OTP_IS_EXPIRED');
   }
 

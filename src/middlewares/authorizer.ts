@@ -1,9 +1,11 @@
 import type { NextFunction, Response } from 'express';
-import { intersection, size } from 'lodash-es';
+import intersection from 'lodash/intersection';
+import size from 'lodash/size';
 
 import { CustomError } from '@/src/utils/error';
 
 import { userHelper } from '@/src/modules/helpers';
+import type { RoleName } from '@/src/modules/role/role.type';
 import { commonService } from '@/src/modules/services';
 import type { AuthRequest } from '@/src/modules/user/user.type';
 
@@ -19,7 +21,7 @@ export const validateTokenAndGetAuthUser = async (token: string) => {
   }
 
   return await userHelper.getAuthUserWithRolesAndPermissions({
-    roles: jwtPayload.roles || [],
+    roles: (jwtPayload.roles ?? []) as RoleName[],
     user_id: jwtPayload.user_id
   });
 };

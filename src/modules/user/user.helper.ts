@@ -1,10 +1,18 @@
 import { and, eq, ilike, inArray, not, or, type SQL, sql } from 'drizzle-orm';
+import find from 'lodash/find';
+import isEmpty from 'lodash/isEmpty';
+import join from 'lodash/join';
+import map from 'lodash/map';
 
+import { commonHelper } from '@/src/modules/helpers';
 import { getTopRoleOfAUser } from '@/src/modules/role/role.helper';
+import type { RoleName } from '@/src/modules/role/role.type';
 import { user } from '@/src/modules/user/user.schema';
-import type { UserQueryParams } from '@/src/modules/user/user.type';
+import type { PermissionsOfARole, UserQueryParams } from '@/src/modules/user/user.type';
 
+import type { DB } from '@/src/db';
 import { db } from '@/src/db';
+import { role } from '@/src/db/schema';
 
 export const countUsers = async (where?: SQL) => {
   const result = await db.select({ count: sql<number>`count(*)` }).from(user).where(where);
@@ -12,11 +20,11 @@ export const countUsers = async (where?: SQL) => {
   return Number(result[0]?.count ?? 0);
 };
 
-export const getAUser = (options: { where?: SQL; withRoles?: boolean }) => {
+export const getAUser = (options: { where?: SQL; withRoles?: boolean }, tx: DB) => {
   const { where, withRoles } = options;
 
   if (withRoles) {
-    return db.query.user.findFirst({
+    return tx.query.user.findFirst({
       where,
       with: {
         role_users: {
@@ -28,7 +36,7 @@ export const getAUser = (options: { where?: SQL; withRoles?: boolean }) => {
     });
   }
 
-  return db.query.user.findFirst({ where });
+  return tx.query.user.findFirst({ where });
 };
 
 export const getUsers = async (options: { where?: SQL; limit?: number; offset?: number }) =>
@@ -120,17 +128,34 @@ export const getUsersForQuery = async (
 };
 
 export const getAuthUserWithRolesAndPermissions = async (params: {
-  roles: string[];
+  roles: RoleName[];
   user_id: string;
+  tx?: DB;
 }) => {
-  const { roles, user_id } = params;
+  const { roles, user_id, tx = db } = params;
 
-  const userResult = await db.query.user.findFirst({
+  if (!commonHelper.validateUUID(user_id)) {
+    throw new Error('INVALID_USER_ID');
+  }
+
+  if (isEmpty(roles)) {
+    throw new Error('USER_HAS_NO_ROLE');
+  }
+
+  const userResult = await tx.query.user.findFirst({
+    // columns: {
+    //   id: true,
+    //   email: true,
+    //   first_name: true,
+    //   last_name: true,
+    //   status: true
+    // },
     where: eq(user.id, user_id),
     with: {
       role_users: {
         with: {
           role: {
+            ...(roles.length > 0 ? { where: inArray(role.name, roles) } : {}),
             with: {
               role_permissions: {
                 with: {
@@ -144,34 +169,31 @@ export const getAuthUserWithRolesAndPermissions = async (params: {
     }
   });
 
-  if (!userResult) {
-    return null;
+  if (!userResult?.id) {
+    throw new Error('USER_NOT_FOUND');
   }
 
-  const userRoles = userResult.role_users
-    .filter((ru) => roles.includes(ru.role?.name ?? ''))
-    .map((ru) => ru.role?.name ?? '')
-    .filter(Boolean);
-
+  const userRoles = map(userResult.role_users, (ru) => ru.role?.name).filter(Boolean) as RoleName[];
   const topRole = getTopRoleOfAUser(userRoles);
 
-  const permissions: Record<string, { action: string; can_do_the_action: boolean }[]> = {};
+  const permissions: Record<string, PermissionsOfARole[]> = {};
+  const topRolePermissions =
+    find(userResult.role_users, (ru) => ru.role?.name === topRole)?.role?.role_permissions || [];
 
-  for (const ru of userResult.role_users) {
-    if (ru.role?.role_permissions) {
-      for (const rp of ru.role.role_permissions) {
-        if (rp.permission) {
-          const module = rp.permission.module;
-          if (!permissions[module]) {
-            permissions[module] = [];
-          }
+  for (const rp of topRolePermissions) {
+    const permission = rp.permission;
 
-          permissions[module].push({
-            action: rp.permission.action,
-            can_do_the_action: rp.can_do_the_action
-          });
-        }
+    if (permission) {
+      const module = permission.module;
+
+      if (!permissions[module]) {
+        permissions[module] = [];
       }
+
+      permissions[module].push({
+        action: permission.action,
+        can_do_the_action: rp.can_do_the_action
+      });
     }
   }
 
@@ -199,9 +221,9 @@ export const getUsernameByNames = (
 ) => {
   const parts = [first_name, last_name].filter(Boolean);
 
-  if (parts.length > 0) {
-    return parts.join(' ');
+  if (isEmpty(parts)) {
+    return email;
   }
 
-  return email;
+  return join(parts, ' ');
 };

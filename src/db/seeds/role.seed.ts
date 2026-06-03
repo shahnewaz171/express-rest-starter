@@ -1,12 +1,9 @@
-import { role } from '@/src/modules/role/role.schema';
+import { role, roleNameEnum } from '@/src/modules/role/role.schema';
 
 import type { DB } from '@/src/db';
 
 export default async function seedRole(db: DB) {
-  await db
-    .insert(role)
-    .values([{ name: 'admin' }, { name: 'developer' }, { name: 'moderator' }, { name: 'user' }])
-    .onConflictDoNothing({ target: [role.name] });
+  const roles = roleNameEnum.enumValues.map((name) => ({ name }));
 
-  return await db.select().from(role);
+  await db.insert(role).values(roles).onConflictDoNothing();
 }

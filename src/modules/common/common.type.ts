@@ -1,5 +1,7 @@
 import type { SignOptions } from 'jsonwebtoken';
 
+import type { PermissionsOfARole } from '@/src/modules/user/user.type';
+
 export interface QueryOptions {
   limit?: number;
   offset?: number;
@@ -9,7 +11,7 @@ export interface QueryOptions {
 export interface ValidateUserPermissionParams {
   action: string;
   module: string;
-  permissions?: Record<string, { action: string; can_do_the_action: boolean }[]>;
+  permissions?: Record<string, PermissionsOfARole[]>;
 }
 
 export interface JWTPayload {

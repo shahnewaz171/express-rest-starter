@@ -11,7 +11,10 @@ export const authTemplate = pgTable(
     subject: text('subject').notNull(),
     created_by: uuid('created_by').references(() => user.id, { onDelete: 'set null' }),
     created_at: timestamp('created_at').notNull().defaultNow(),
-    updated_at: timestamp('updated_at').notNull().defaultNow()
+    updated_at: timestamp('updated_at')
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date())
   },
   (table) => [
     index('auth_templates_created_at_idx').on(table.created_at),

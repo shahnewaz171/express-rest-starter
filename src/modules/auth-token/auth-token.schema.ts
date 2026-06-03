@@ -11,12 +11,15 @@ export const authToken = pgTable(
     expires_at: timestamp('expires_at'),
     user_id: uuid('user_id')
       .notNull()
-      .references(() => user.id, { onDelete: 'cascade' }),
+      .references(() => user.id, { onDelete: 'cascade' }), //. cascade delete auth tokens when user is deleted
     created_at: timestamp('created_at').notNull().defaultNow(),
-    updated_at: timestamp('updated_at').notNull().defaultNow()
+    updated_at: timestamp('updated_at')
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date())
   },
   (table) => [
-    uniqueIndex('auth_tokens_access_token_user_id_idx').on(table.access_token, table.user_id),
+    uniqueIndex('auth_tokens_access_token_idx').on(table.access_token),
     index('auth_tokens_user_id_idx').on(table.user_id),
     index('auth_tokens_created_at_idx').on(table.created_at),
     index('auth_tokens_refresh_token_idx').on(table.refresh_token),

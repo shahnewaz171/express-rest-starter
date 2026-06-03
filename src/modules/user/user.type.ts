@@ -31,9 +31,14 @@ export interface GetUsersParams {
   password: string;
   old_passwords: string[];
   new_email: string | null;
-  status: 'active' | 'inactive' | 'invited' | 'unverified';
+  status: UserStatus;
   image: string | null;
   last_login_at: Date | null;
+}
+
+export interface PermissionsOfARole {
+  action: string;
+  can_do_the_action: boolean;
 }
 
 export interface AuthRequest extends Request {
@@ -50,7 +55,7 @@ export interface AuthRequest extends Request {
         last_login_at: Date | null;
         roles: string[];
         role: string | null;
-        permissions: Record<string, { action: string; can_do_the_action: boolean }[]>;
+        permissions: Record<string, PermissionsOfARole[]>;
         user_id: string;
       }
     | null

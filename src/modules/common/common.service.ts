@@ -1,27 +1,32 @@
+import { createHash } from 'node:crypto';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import jwt, { type JwtPayload } from 'jsonwebtoken';
 
 import { JWT_ISSUER, JWT_SECRET } from '@/src/utils/env';
 
 import type { GenerateJWTOptions } from '@/src/modules/common/common.type';
 import { commonHelper } from '@/src/modules/helpers';
 
-export const compareHashPassword = (str: string, hashStr: string) => {
+export const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
+
+export const compareHashPassword = async (str: string, hashStr: string) => {
   if (!str || !hashStr) return false;
 
-  return bcrypt.compareSync(str, hashStr);
+  return await bcrypt.compare(str, hashStr);
 };
 
-export const checkOldPasswords = (new_password: string, oldPasswords: string[] = []) => {
+export const checkOldPasswords = async (new_password: string, oldPasswords: string[] = []) => {
   for (const password of oldPasswords) {
-    if (compareHashPassword(new_password, password)) {
+    const isValid = await compareHashPassword(new_password, password);
+
+    if (isValid) {
       return true;
     }
   }
   return false;
 };
 
-export const generateHashPassword = (str: string = '') => bcrypt.hashSync(str, 10);
+export const generateHashPassword = async (str: string = '') => await bcrypt.hash(str, 10);
 
 export const generateJWTToken = (
   payload: GenerateJWTOptions['payload'] = {},
@@ -39,11 +44,11 @@ export const generateJWTToken = (
     { expiresIn }
   );
 
-export const decodeJWTToken = (token: string) => jwt.decode(token);
+export const decodeJWTToken = (token: string) => jwt.decode(token) as JwtPayload;
 
 export const verifyJWTToken = (token: string) => {
   try {
-    const payload = jwt.verify(token, JWT_SECRET);
+    const payload = jwt.verify(token, JWT_SECRET, { issuer: JWT_ISSUER });
 
     return { message: 'TOKEN_IS_VERIFIED', payload, success: true };
   } catch (err) {

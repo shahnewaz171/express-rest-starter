@@ -3,6 +3,7 @@ import { and, eq, inArray, not, type SQL, sql } from 'drizzle-orm';
 import { CustomError } from '@/src/utils/error';
 
 import { permission } from '@/src/modules/permission/permission.schema';
+import type { PermissionAction, PermissionModule } from '@/src/modules/permission/permission.type';
 
 import { db } from '@/src/db';
 
@@ -28,8 +29,8 @@ export const getPermissions = async (options?: { where?: SQL; limit?: number; of
   });
 
 export const preparePermissionQuery = (params: {
-  action?: string;
-  module?: string;
+  action?: PermissionAction;
+  module?: PermissionModule;
   exclude_entity_ids?: string | string[];
   include_entity_ids?: string | string[];
 }) => {
@@ -77,8 +78,8 @@ export const getAPermissionForQuery = async (params: { entity_id: string }) => {
 
 export const getPermissionsForQuery = async (
   query: {
-    action?: string;
-    module?: string;
+    action?: PermissionAction;
+    module?: PermissionModule;
     exclude_entity_ids?: string | string[];
     include_entity_ids?: string | string[];
   },

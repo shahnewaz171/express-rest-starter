@@ -18,7 +18,10 @@ export const rolePermission = pgTable(
     created_by: uuid('created_by').references(() => user.id, { onDelete: 'set null' }),
     updated_by: uuid('updated_by').references(() => user.id, { onDelete: 'set null' }),
     created_at: timestamp('created_at').notNull().defaultNow(),
-    updated_at: timestamp('updated_at').notNull().defaultNow()
+    updated_at: timestamp('updated_at')
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date())
   },
   (table) => [
     uniqueIndex('role_permissions_role_id_permission_id_idx').on(
@@ -27,7 +30,8 @@ export const rolePermission = pgTable(
     ),
     index('role_permissions_created_at_idx').on(table.created_at),
     index('role_permissions_created_by_idx').on(table.created_by),
-    index('role_permissions_updated_at_idx').on(table.updated_at)
+    index('role_permissions_updated_at_idx').on(table.updated_at),
+    index('role_permissions_updated_by_idx').on(table.updated_by)
   ]
 );
 

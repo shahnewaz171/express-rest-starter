@@ -1,4 +1,4 @@
-import { index, jsonb, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { index, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 export const userStatusEnum = pgEnum('user_status', [
   'active',
@@ -16,12 +16,15 @@ export const user = pgTable(
     last_name: text('last_name'),
     new_email: text('new_email'),
     phone_number: text('phone_number'),
-    password: text('password'),
-    old_passwords: jsonb('old_passwords').$type<string[]>().notNull().default([]),
+    password: text('password').notNull(),
+    old_passwords: text('old_passwords').array().notNull().default([]),
     status: userStatusEnum('status').notNull().default('unverified'),
     image: text('image'),
     created_at: timestamp('created_at').notNull().defaultNow(),
-    updated_at: timestamp('updated_at').notNull().defaultNow(),
+    updated_at: timestamp('updated_at')
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
     last_login_at: timestamp('last_login_at')
   },
   (table) => [

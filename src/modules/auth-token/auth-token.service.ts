@@ -16,26 +16,20 @@ import { authTokenHelper } from '@/src/modules/helpers';
 import type { DB } from '@/src/db';
 import { db } from '@/src/db';
 
-export const createAnAuthToken = async (data: NewAuthToken, tx?: DB) => {
-  const executor = tx ?? db;
-
-  const [created] = await executor.insert(authToken).values(data).returning();
+export const createAnAuthToken = async (data: NewAuthToken, tx: DB = db) => {
+  const [created] = await tx.insert(authToken).values(data).returning();
 
   return created;
 };
 
-export const deleteAnAuthToken = async (where: SQL, tx?: DB) => {
-  const executor = tx ?? db;
-
-  const [deleted] = await executor.delete(authToken).where(where).returning();
+export const deleteAnAuthToken = async (where: SQL, tx: DB = db) => {
+  const [deleted] = await tx.delete(authToken).where(where).returning();
 
   return deleted;
 };
 
-export const deleteAuthTokens = async (where: SQL, tx?: DB) => {
-  const executor = tx ?? db;
-
-  const results = await executor.delete(authToken).where(where).returning();
+export const deleteAuthTokens = async (where: SQL, tx: DB = db) => {
+  const results = await tx.delete(authToken).where(where).returning();
 
   return results;
 };
@@ -61,7 +55,7 @@ export const createAuthTokensForUser = async (
   return { access_token, refresh_token };
 };
 
-export const verifyAnAuthTokenForUser = async (params: VerifyTokenInput, _tx?: DB) => {
+export const verifyAnAuthTokenForUser = async (params: VerifyTokenInput, tx?: DB) => {
   const { token, type } = params;
 
   const { user_id } = (commonService.decodeJWTToken(token) as { user_id?: string }) || {};
@@ -71,7 +65,9 @@ export const verifyAnAuthTokenForUser = async (params: VerifyTokenInput, _tx?: D
       ? and(eq(authToken.access_token, token), eq(authToken.user_id, user_id ?? ''))
       : and(eq(authToken.refresh_token, token), eq(authToken.user_id, user_id ?? ''));
 
-  const authTokenData = where ? await authTokenHelper.getAnAuthToken({ where }) : null;
+  const authTokenData = where
+    ? await authTokenHelper.getAnAuthToken({ where, ...(tx && { tx }) })
+    : null;
 
   if (!authTokenData?.id) {
     return { message: 'INVALID_TOKEN', success: false };
@@ -92,7 +88,11 @@ export const refreshAuthTokensForUser = async (params: RefreshTokenInput, tx?: D
   const where = and(eq(authToken.refresh_token, refresh_token), eq(authToken.user_id, user_id));
 
   const existingToken = where
-    ? await authTokenHelper.getAnAuthToken({ where, with: { user: true } })
+    ? await authTokenHelper.getAnAuthToken({
+        where,
+        with: { user: true },
+        ...(tx && { tx })
+      })
     : null;
 
   if (!existingToken) {
@@ -135,11 +135,10 @@ export const revokeAnAuthTokenForUser = async (params: RevokeTokenInput, tx?: DB
   return { message: 'LOGGED_OUT', success: true };
 };
 
-export const revokeAuthTokensForUser = async (params: { user_id: string }, tx?: DB) => {
+export const revokeAuthTokensForUser = async (params: { user_id: string }, tx: DB = db) => {
   const { user_id } = params;
-  const executor = tx ?? db;
 
-  const foundUser = await executor.query.user.findFirst({
+  const foundUser = await tx.query.user.findFirst({
     where: (users, { eq: eqFn }) => eqFn(users.id, user_id)
   });
 

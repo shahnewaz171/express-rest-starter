@@ -1,5 +1,9 @@
-import { find, isFinite as isFiniteNumber } from 'lodash-es';
+import { randomInt } from 'node:crypto';
+import find from 'lodash/find';
+import isFiniteNumber from 'lodash/isFinite';
 import validator from 'validator';
+
+import { CustomError } from '@/src/utils/error';
 
 import type { QueryOptions, ValidateUserPermissionParams } from '@/src/modules/common/common.type';
 
@@ -23,12 +27,9 @@ export const getOptionsFromQuery = (query: QueryOptions) => {
 };
 
 export const getRandomNumber = (length: number) => {
-  const characters = '0123456789';
-
   let result = '';
   for (let i = 0; i < length; i += 1) {
-    const randomIndex = Math.floor(Math.random() * characters.length);
-    result += characters.charAt(randomIndex);
+    result += randomInt(0, 10).toString();
   }
 
   return result;
@@ -38,9 +39,9 @@ export const getRandomString = () => crypto.randomUUID();
 
 export const validateDomain = (domain: string) => validator.isFQDN(domain);
 
-export const validateEmail = (email = '') => validator.isEmail(email);
+export const validateEmail = (email: string) => validator.isEmail(email);
 
-export const validateUUID = (uuid = '') => validator.isUUID(uuid);
+export const validateUUID = (uuid: string) => validator.isUUID(uuid);
 
 export const validatePassword = (password: string) =>
   validator.isStrongPassword(password, {
@@ -61,5 +62,8 @@ export const validateUserPermission = ({
   permissions = {}
 }: ValidateUserPermissionParams) => {
   const permission = find(permissions?.[module] || [], (perm) => perm?.action === action);
-  return !!permission?.can_do_the_action;
+
+  if (!permission?.can_do_the_action) throw new CustomError(403, 'PERMISSION_DENIED');
+
+  return permission.can_do_the_action;
 };

@@ -6,6 +6,8 @@ import { commonHelper, roleHelper } from '@/src/modules/helpers';
 import { roleService } from '@/src/modules/services';
 import type { AuthRequest } from '@/src/modules/user/user.type';
 
+import { useTransaction } from '@/src/db';
+
 export const roleController = {
   createARole: async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
@@ -14,7 +16,9 @@ export const roleController = {
         throw new CustomError(401, 'UNAUTHORIZED');
       }
 
-      const newRole = await roleService.createARoleForMutation(req.body, { user_id: userId });
+      const newRole = await useTransaction(async (tx) =>
+        roleService.createARoleForMutation(req.body, { user_id: userId }, tx)
+      );
       res.status(201).json({ data: newRole });
     } catch (err) {
       next(err);
@@ -23,9 +27,12 @@ export const roleController = {
 
   updateARole: async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-      const updatedRole = await roleService.updateARoleForMutation(
-        { entity_id: String(req.params.entity_id), data: req.body },
-        { user_id: req.user?.id ?? '' }
+      const updatedRole = await useTransaction(async (tx) =>
+        roleService.updateARoleForMutation(
+          { entity_id: String(req.params.entity_id), data: req.body },
+          { user_id: req.user?.id ?? '' },
+          tx
+        )
       );
       res.json({ data: updatedRole });
     } catch (err) {
@@ -35,9 +42,14 @@ export const roleController = {
 
   deleteARole: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const deletedRole = await roleService.deleteARoleForMutation({
-        entity_id: String(req.params.entity_id)
-      });
+      const deletedRole = await useTransaction(async (tx) =>
+        roleService.deleteARoleForMutation(
+          {
+            entity_id: String(req.params.entity_id)
+          },
+          tx
+        )
+      );
       res.json({ data: deletedRole });
     } catch (err) {
       next(err);

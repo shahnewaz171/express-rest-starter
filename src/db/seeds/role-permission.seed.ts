@@ -1,24 +1,43 @@
+import isEmpty from 'lodash/isEmpty';
+
 import { permission } from '@/src/modules/permission/permission.schema';
-import { role } from '@/src/modules/role/role.schema';
 import { rolePermission } from '@/src/modules/role-permission/role-permission.schema';
 
 import type { DB } from '@/src/db';
+import { role } from '@/src/db/schema';
 
-export default async function seedRolePermission(db: DB) {
-  const allRoles = await db.select().from(role);
-  const allPermissions = await db.select().from(permission);
+const protectedModules = new Set(['user', 'role']);
 
-  const adminRole = allRoles.find((r) => r.name === 'admin');
-  if (!adminRole) return;
+export default async function seedRolePermission(tx: DB) {
+  const roles = await tx.select().from(role);
+  const permissions = await tx.select().from(permission);
 
-  const adminRolePermissions = allPermissions.map((perm) => ({
-    role_id: adminRole.id,
-    permission_id: perm.id,
-    can_do_the_action: true
-  }));
+  const rolePermissions = [];
 
-  await db
-    .insert(rolePermission)
-    .values(adminRolePermissions)
-    .onConflictDoNothing({ target: [rolePermission.role_id, rolePermission.permission_id] });
+  for (const item of roles) {
+    for (const perm of permissions) {
+      const isDeveloperRestricted = perm.action === 'delete' && protectedModules.has(perm.module);
+
+      if (item.name === 'admin') {
+        rolePermissions.push({
+          role_id: item.id,
+          permission_id: perm.id,
+          can_do_the_action: true
+        });
+      } else if (item.name === 'developer' && !isDeveloperRestricted) {
+        rolePermissions.push({
+          role_id: item.id,
+          permission_id: perm.id,
+          can_do_the_action: true
+        });
+      }
+    }
+  }
+
+  if (isEmpty(rolePermissions)) {
+    console.warn('No role permissions to insert, skipping seed');
+    return;
+  }
+
+  await tx.insert(rolePermission).values(rolePermissions).onConflictDoNothing();
 }

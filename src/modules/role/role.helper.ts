@@ -1,7 +1,9 @@
 import { and, eq, inArray, not, type SQL, sql } from 'drizzle-orm';
-import { head, intersection } from 'lodash-es';
+import head from 'lodash/head';
+import intersection from 'lodash/intersection';
 
-import { role } from '@/src/modules/role/role.schema';
+import { role, roleNameEnum } from '@/src/modules/role/role.schema';
+import type { RoleName } from '@/src/modules/role/role.type';
 
 import { db } from '@/src/db';
 
@@ -29,7 +31,7 @@ export const getRoles = async (options?: { where?: SQL; limit?: number; offset?:
 export const prepareRoleQuery = (params: {
   exclude_entity_ids?: string | string[];
   include_entity_ids?: string | string[];
-  names?: string | string[];
+  names?: RoleName | RoleName[];
 }) => {
   const conditions: SQL[] = [];
 
@@ -43,9 +45,10 @@ export const prepareRoleQuery = (params: {
     conditions.push(inArray(role.id, includeIds));
   }
 
-  const names = toArray(params.names);
+  const names = toArray(params.names) as RoleName[];
   if (names?.length > 0) {
-    conditions.push(inArray(role.name, names));
+    const validNames = inArray(role.name, names);
+    conditions.push(validNames);
   }
 
   return conditions.length > 0 ? and(...conditions) : undefined;
@@ -67,7 +70,7 @@ export const getRolesForQuery = async (
   query: {
     exclude_entity_ids?: string | string[];
     include_entity_ids?: string | string[];
-    names?: string | string[];
+    names?: RoleName | RoleName[];
   },
   options: { limit?: number; offset?: number }
 ) => {
@@ -99,5 +102,5 @@ export const getRolesForQuery = async (
   };
 };
 
-export const getTopRoleOfAUser = (roles: string[]) =>
-  head(intersection(['admin', 'developer', 'moderator', 'user'], roles)) ?? null;
+export const getTopRoleOfAUser = (roles: RoleName[]) =>
+  head(intersection(roleNameEnum.enumValues, roles)) ?? null;

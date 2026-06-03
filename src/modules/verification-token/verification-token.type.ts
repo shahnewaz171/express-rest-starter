@@ -1,5 +1,10 @@
-export type VerificationTokenType = 'forgot_password' | 'user_verification';
-export type VerificationTokenStatus = 'cancelled' | 'verified' | 'unverified';
+import type {
+  verificationTokenStatusEnum,
+  verificationTokenTypeEnum
+} from '@/src/modules/verification-token/verification-token.schema';
+
+export type VerificationTokenStatus = (typeof verificationTokenStatusEnum.enumValues)[number];
+export type VerificationTokenType = (typeof verificationTokenTypeEnum.enumValues)[number];
 
 export interface CreateVerificationTokenInput {
   email: string;

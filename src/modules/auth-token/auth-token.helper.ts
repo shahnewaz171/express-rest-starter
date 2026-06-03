@@ -2,12 +2,13 @@ import { and, eq, type SQL } from 'drizzle-orm';
 
 import { authToken } from '@/src/modules/auth-token/auth-token.schema';
 
+import type { DB } from '@/src/db';
 import { db } from '@/src/db';
 
-export const countAuthTokens = async (where?: SQL) => {
+export const countAuthTokens = async (where?: SQL, tx: DB = db) => {
   const conditions = where ? [where] : [];
 
-  const result = await db
+  const result = await tx
     .select({ count: authToken.id })
     .from(authToken)
     .where(and(...conditions));
@@ -15,10 +16,14 @@ export const countAuthTokens = async (where?: SQL) => {
   return result.length;
 };
 
-export const getAnAuthToken = async (options: { where?: SQL; with?: Record<string, boolean> }) => {
-  const { where, with: withRelations } = options;
+export const getAnAuthToken = async (options: {
+  where?: SQL;
+  with?: Record<string, boolean>;
+  tx?: DB;
+}) => {
+  const { where, with: withRelations, tx = db } = options;
 
-  const result = await db.query.authToken.findFirst({
+  const result = await tx.query.authToken.findFirst({
     where,
     with: withRelations
   });
@@ -32,10 +37,11 @@ export const getAuthTokens = async (options: {
   offset?: number;
   order?: [string, string][];
   with?: Record<string, boolean>;
+  tx?: DB;
 }) => {
-  const { where, limit = 50, offset = 0, with: withRelations } = options;
+  const { where, limit = 50, offset = 0, with: withRelations, tx = db } = options;
 
-  const result = await db.query.authToken.findMany({
+  const result = await tx.query.authToken.findMany({
     where,
     limit,
     offset,

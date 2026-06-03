@@ -2,12 +2,13 @@ import { and, type SQL } from 'drizzle-orm';
 
 import { verificationToken } from '@/src/modules/verification-token/verification-token.schema';
 
+import type { DB } from '@/src/db';
 import { db } from '@/src/db';
 
-export const countVerificationTokens = async (where?: SQL) => {
+export const countVerificationTokens = async (where?: SQL, tx: DB = db) => {
   const conditions = where ? [where] : [];
 
-  const result = await db
+  const result = await tx
     .select({ count: verificationToken.id })
     .from(verificationToken)
     .where(and(...conditions));
@@ -18,10 +19,11 @@ export const countVerificationTokens = async (where?: SQL) => {
 export const getAVerificationToken = async (options: {
   where?: SQL;
   with?: Record<string, boolean>;
+  tx?: DB;
 }) => {
-  const { where, with: withRelations } = options;
+  const { where, with: withRelations, tx = db } = options;
 
-  const result = await db.query.verificationToken.findFirst({
+  const result = await tx.query.verificationToken.findFirst({
     where,
     with: withRelations
   });
@@ -35,10 +37,11 @@ export const getVerificationTokens = async (options: {
   offset?: number;
   order?: [string, string][];
   with?: Record<string, boolean>;
+  tx?: DB;
 }) => {
-  const { where, limit = 50, offset = 0, with: withRelations } = options;
+  const { where, limit = 50, offset = 0, with: withRelations, tx = db } = options;
 
-  const result = await db.query.verificationToken.findMany({
+  const result = await tx.query.verificationToken.findMany({
     where,
     limit,
     offset,

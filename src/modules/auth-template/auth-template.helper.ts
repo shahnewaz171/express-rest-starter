@@ -7,16 +7,18 @@ import type { AuthTemplateQueryParams } from '@/src/modules/auth-template/auth-t
 import { getOptionsFromQuery } from '@/src/modules/common/common.helper';
 import type { QueryOptions } from '@/src/modules/common/common.type';
 
+import type { DB } from '@/src/db';
 import { db } from '@/src/db';
 
-export const countAuthTemplates = async (where?: SQL) => {
-  const result = await db.select({ count: sql<number>`count(*)` }).from(authTemplate).where(where);
+export const countAuthTemplates = async (where?: SQL, tx: DB = db) => {
+  const result = await tx.select({ count: sql<number>`count(*)` }).from(authTemplate).where(where);
 
   return Number(result[0]?.count ?? 0);
 };
 
-export const getAnAuthTemplate = async (options: { where?: SQL }) => {
-  const result = await db.select().from(authTemplate).where(options.where).limit(1);
+export const getAnAuthTemplate = async (options: { where?: SQL; tx?: DB }) => {
+  const { tx = db } = options;
+  const result = await tx.select().from(authTemplate).where(options.where).limit(1);
 
   return result[0] ?? null;
 };
@@ -26,10 +28,11 @@ export const getAuthTemplates = async (options: {
   limit?: number;
   offset?: number;
   order?: [string, string][];
+  tx?: DB;
 }) => {
-  const { where, limit = 50, offset = 0 } = options;
+  const { where, limit = 50, offset = 0, tx = db } = options;
 
-  const result = await db
+  const result = await tx
     .select()
     .from(authTemplate)
     .where(where)
@@ -71,9 +74,12 @@ export const prepareAuthTemplateQuery = (params: AuthTemplateQueryParams) => {
   return conditions.length > 0 ? sql`${sql.join(conditions, sql` AND `)}` : undefined;
 };
 
-export const getAnAuthTemplateForQuery = async (params: AuthTemplateQueryParams) => {
+export const getAnAuthTemplateForQuery = async (params: AuthTemplateQueryParams, tx?: DB) => {
   const where = prepareAuthTemplateQuery(params);
-  const template = await getAnAuthTemplate(where === undefined ? {} : { where });
+  const template = await getAnAuthTemplate({
+    ...(where !== undefined && { where }),
+    ...(tx && { tx })
+  });
 
   if (!template) {
     throw new CustomError(404, 'AUTH_TEMPLATE_NOT_FOUND');
@@ -82,13 +88,21 @@ export const getAnAuthTemplateForQuery = async (params: AuthTemplateQueryParams)
   return template;
 };
 
-export const getAuthTemplatesForQuery = async (params: AuthTemplateQueryParams & QueryOptions) => {
+export const getAuthTemplatesForQuery = async (
+  params: AuthTemplateQueryParams & QueryOptions,
+  tx?: DB
+) => {
   const { limit, offset } = getOptionsFromQuery(params);
   const where = prepareAuthTemplateQuery(params);
 
   const [data, totalRows] = await Promise.all([
-    getAuthTemplates(where === undefined ? { limit, offset } : { where, limit, offset }),
-    countAuthTemplates(where)
+    getAuthTemplates({
+      ...(where !== undefined && { where }),
+      limit,
+      offset,
+      ...(tx && { tx })
+    }),
+    countAuthTemplates(where, tx)
   ]);
 
   return {

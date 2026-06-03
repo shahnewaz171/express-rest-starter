@@ -36,10 +36,10 @@ const startDBSeeding = async () => {
       ]);
 
       await seeds.authTemplate(tx);
-      const roles = await seeds.role(tx);
+      await seeds.role(tx);
       await seeds.permission(tx);
       await seeds.rolePermission(tx);
-      await seeds.user(tx, roles);
+      await seeds.user(tx);
     });
 
     console.log('Database seeding completed');

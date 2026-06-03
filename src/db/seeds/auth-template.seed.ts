@@ -22,5 +22,5 @@ export default async function seedAuthTemplate(db: DB) {
         subject: 'Confirm Your Email Change'
       }
     ])
-    .onConflictDoNothing({ target: [authTemplate.event] });
+    .onConflictDoNothing();
 }

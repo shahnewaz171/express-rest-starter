@@ -2,8 +2,12 @@ import { relations } from 'drizzle-orm';
 
 import { authTemplate } from '@/src/modules/auth-template/auth-template.schema';
 import { authToken } from '@/src/modules/auth-token/auth-token.schema';
-import { permission } from '@/src/modules/permission/permission.schema';
-import { role } from '@/src/modules/role/role.schema';
+import {
+  permission,
+  permissionActionsEnum,
+  permissionModulesEnum
+} from '@/src/modules/permission/permission.schema';
+import { role, roleNameEnum } from '@/src/modules/role/role.schema';
 import { rolePermission } from '@/src/modules/role-permission/role-permission.schema';
 import { roleUser } from '@/src/modules/role-user/role-user.schema';
 import { user, userStatusEnum } from '@/src/modules/user/user.schema';
@@ -87,7 +91,10 @@ export {
   authTemplate,
   authToken,
   permission,
+  permissionActionsEnum,
+  permissionModulesEnum,
   role,
+  roleNameEnum,
   rolePermission,
   roleUser,
   user,

@@ -28,7 +28,7 @@ export const updateAnAuthTemplate = async (
   data: UpdateAuthTemplateInput,
   tx: DB = db
 ) => {
-  const updateData: Record<string, unknown> = { updated_at: new Date() };
+  const updateData: Record<string, unknown> = {};
 
   if (data.body !== undefined) updateData.body = data.body;
   if (data.event !== undefined) updateData.event = data.event;
@@ -75,7 +75,7 @@ export const updateAnAuthTemplateForMutation = async (
   params: AuthTemplateQueryParams & UpdateAuthTemplateInput,
   tx?: DB
 ) => {
-  const template = await getAnAuthTemplateForQuery(params);
+  const template = await getAnAuthTemplateForQuery(params, tx);
 
   const updateData: UpdateAuthTemplateInput = {};
   if (params.body !== undefined) updateData.body = params.body;
@@ -86,7 +86,7 @@ export const updateAnAuthTemplateForMutation = async (
 };
 
 export const removeAnAuthTemplateForMutation = async (params: AuthTemplateQueryParams, tx?: DB) => {
-  const template = await getAnAuthTemplateForQuery(params);
+  const template = await getAnAuthTemplateForQuery(params, tx);
 
   return deleteAnAuthTemplate(template.id, tx);
 };
