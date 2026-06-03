@@ -1,12 +1,12 @@
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 
-import { DB_MIGRATING } from '@/src/utils/env';
+import env from '@/src/utils/env';
 
 import { db, pool } from '@/src/db';
 
 import config from '@/drizzle.config';
 
-if (DB_MIGRATING !== 'true') {
+if (!env.DB_MIGRATING) {
   throw new Error('You must set DB_MIGRATING to "true" when running migrations');
 }
 

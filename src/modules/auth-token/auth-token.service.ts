@@ -1,6 +1,6 @@
 import { and, eq, type SQL } from 'drizzle-orm';
 
-import { ACCESS_TOKEN_EXPIRY, REFRESH_TOKEN_EXPIRY } from '@/src/utils/env';
+import env from '@/src/utils/env';
 import { CustomError } from '@/src/utils/error';
 
 import * as authTokenHelper from '@/src/modules/auth-token/auth-token.helper';
@@ -42,12 +42,12 @@ export const createAuthTokensForUser = async (
 
   const access_token = commonService.generateJWTToken(
     { roles, sub: user_id, user_id },
-    ACCESS_TOKEN_EXPIRY as Parameters<typeof commonService.generateJWTToken>[1]
+    env.ACCESS_TOKEN_EXPIRY as Parameters<typeof commonService.generateJWTToken>[1]
   );
 
   const refresh_token = commonService.generateJWTToken(
     { sub: user_id, user_id },
-    REFRESH_TOKEN_EXPIRY as Parameters<typeof commonService.generateJWTToken>[1]
+    env.REFRESH_TOKEN_EXPIRY as Parameters<typeof commonService.generateJWTToken>[1]
   );
 
   await createAnAuthToken({ access_token, refresh_token, user_id }, tx);

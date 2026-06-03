@@ -9,7 +9,7 @@ services:
     ports:
       - "${PORT}:${PORT}"
     environment:
-      POSTGRES_URL: postgresql://${PG_USER}:${PG_PASSWORD}@postgres:${PG_PORT}/${PG_DATABASE}
+      DATABASE_URL: postgresql://${PG_USER}:${PG_PASSWORD}@postgres:${PG_PORT}/${PG_DATABASE}
     volumes:
       - .:/app
       - /app/node_modules

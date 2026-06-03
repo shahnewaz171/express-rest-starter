@@ -2,7 +2,7 @@ import http from 'node:http';
 import cors from 'cors';
 import express from 'express';
 
-import { PORT } from '@/src/utils/env';
+import env from '@/src/utils/env';
 
 // Middlewares
 import errorHandler from '@/src/middlewares/error';
@@ -49,8 +49,8 @@ const server = http.createServer(app);
 
 connectToPostgresDB()
   .then(() => {
-    server.listen(PORT, () => {
-      console.log(`Server running on http://localhost:${PORT}`);
+    server.listen(env.PORT, () => {
+      console.log(`Server running on http://localhost:${env.PORT}`);
     });
   })
   .catch((err) => {

@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import jwt, { type JwtPayload } from 'jsonwebtoken';
 
-import { JWT_ISSUER, JWT_SECRET } from '@/src/utils/env';
+import env from '@/src/utils/env';
 
 import * as commonHelper from '@/src/modules/common/common.helper';
 import type { GenerateJWTOptions } from '@/src/modules/common/common.type';
@@ -34,13 +34,13 @@ export const generateJWTToken = (
 ) =>
   jwt.sign(
     {
-      iss: JWT_ISSUER,
+      iss: env.JWT_ISSUER,
       sub: payload.sub ?? commonHelper.getRandomString(),
       aud: payload.aud ?? commonHelper.getRandomString(),
       jti: payload.jti ?? commonHelper.getRandomString(),
       ...payload
     },
-    JWT_SECRET,
+    env.JWT_SECRET,
     { expiresIn }
   );
 
@@ -48,7 +48,7 @@ export const decodeJWTToken = (token: string) => jwt.decode(token) as JwtPayload
 
 export const verifyJWTToken = (token: string) => {
   try {
-    const payload = jwt.verify(token, JWT_SECRET, { issuer: JWT_ISSUER });
+    const payload = jwt.verify(token, env.JWT_SECRET, { issuer: env.JWT_ISSUER });
 
     return { message: 'TOKEN_IS_VERIFIED', payload, success: true };
   } catch (err) {

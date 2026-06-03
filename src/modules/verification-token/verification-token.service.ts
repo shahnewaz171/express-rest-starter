@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import { and, eq, type SQL } from 'drizzle-orm';
 
-import { CLIENT_APP_URL } from '@/src/utils/env';
+import env from '@/src/utils/env';
 
 import * as commonHelper from '@/src/modules/common/common.helper';
 import * as notificationService from '@/src/modules/notification/notification.service';
@@ -84,7 +84,7 @@ export const createAVerificationTokenForUser = async (
     variables: {
       email,
       token: created.token,
-      url: CLIENT_APP_URL || '',
+      url: env.CLIENT_APP_URL,
       username: userHelper.getUsernameByNames(email, first_name, last_name)
     }
   });

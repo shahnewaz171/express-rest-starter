@@ -1,12 +1,12 @@
 import { getTableName, sql, type Table } from 'drizzle-orm';
 
-import { DB_SEEDING } from '@/src/utils/env';
+import env from '@/src/utils/env';
 
 import { type DB, db, pool } from '@/src/db';
 import * as schema from '@/src/db/schema';
 import * as seeds from '@/src/db/seeds';
 
-if (DB_SEEDING !== 'true') {
+if (!env.DB_SEEDING) {
   throw new Error('You must set DB_SEEDING to "true" when running seeds');
 }
 

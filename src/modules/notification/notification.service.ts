@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import Handlebars from 'handlebars';
 import MailComposer from 'nodemailer/lib/mail-composer';
 
-import { AWS_ACCESS_KEY, AWS_REGION, AWS_SECRET_KEY, FROM_EMAIL } from '@/src/utils/env';
+import env from '@/src/utils/env';
 
 import * as authTemplateHelper from '@/src/modules/auth-template/auth-template.helper';
 import { authTemplate } from '@/src/modules/auth-template/auth-template.schema';
@@ -15,16 +15,16 @@ import type {
 Handlebars.registerHelper('current_year', () => new Date().getFullYear());
 
 const sesClient = new SESClient({
-  region: AWS_REGION,
+  region: env.AWS_REGION,
   credentials: {
-    accessKeyId: AWS_ACCESS_KEY,
-    secretAccessKey: AWS_SECRET_KEY
+    accessKeyId: env.AWS_ACCESS_KEY,
+    secretAccessKey: env.AWS_SECRET_KEY
   }
 });
 
 export const sendEmailBySES = async (params: SendEmailParams) => {
   const mail = new MailComposer({
-    from: params.from_email || FROM_EMAIL,
+    from: params.from_email || env.FROM_EMAIL,
     to: params.to_email,
     replyTo: params.reply_to || undefined,
     subject: params.subject,
@@ -65,7 +65,7 @@ export const sendNotification = async (params: SendNotificationParams) => {
   const compiledSubject = Handlebars.compile(template.subject)(variables);
 
   const emailParams: SendEmailParams = {
-    from_email: params.from_email ?? FROM_EMAIL,
+    from_email: params.from_email ?? env.FROM_EMAIL,
     to_email: params.to_email,
     reply_to: params.reply_to ?? '',
     subject: compiledSubject,

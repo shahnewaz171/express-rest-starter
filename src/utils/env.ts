@@ -1,25 +1,48 @@
 // Initiating dotenv
 import { config } from 'dotenv';
 import { expand } from 'dotenv-expand';
+import { ZodError, z } from 'zod';
+
+const stringBoolean = z.coerce
+  .string()
+  .default('false')
+  .transform((val) => val === 'true');
+
+const EnvSchema = z.object({
+  NODE_ENV: z.string().default('development'),
+  PORT: z.string().default('8000'),
+  DATABASE_URL: z.string().min(1, 'DATABASE URL is required'),
+  DB_MIGRATING: stringBoolean,
+  DB_SEEDING: stringBoolean,
+  JWT_SECRET: z.string().min(1, 'JWT_SECRET is required'),
+  JWT_ISSUER: z.string().min(1, 'JWT_ISSUER is required'),
+  ACCESS_TOKEN_EXPIRY: z.string().default('1d'),
+  REFRESH_TOKEN_EXPIRY: z.string().default('30d'),
+  CLIENT_APP_URL: z.string().min(1, 'CLIENT_APP_URL is required'),
+  FROM_EMAIL: z.string().min(1, 'FROM_EMAIL is required'),
+  AWS_ACCESS_KEY: z.string().min(1, 'AWS_ACCESS_KEY is required'),
+  AWS_SECRET_KEY: z.string().min(1, 'AWS_SECRET_KEY is required'),
+  AWS_REGION: z.string().min(1, 'AWS_REGION is required')
+});
+
+export type EnvSchemaType = z.infer<typeof EnvSchema>;
 
 // Expanding environment variables
 expand(config());
 
-// Exporting environment variables
-export const PORT = process.env.PORT || 8000;
-export const DATABASE_URL = process.env.POSTGRES_URL as string;
-export const DB_MIGRATING = process.env.DB_MIGRATING as string;
-export const DB_SEEDING = process.env.DB_SEEDING as string;
-export const JWT_SECRET = process.env.JWT_SECRET as string;
-export const JWT_ISSUER = process.env.JWT_ISSUER as string;
+try {
+  EnvSchema.parse(process.env);
+} catch (error) {
+  if (error instanceof ZodError) {
+    let message = 'Missing required values in .env:\n';
+    error.issues.forEach((issue) => {
+      message += `${issue.path.join('.')}: ${issue.message}\n`;
+    });
+    const e = new Error(message);
+    e.stack = '';
+    throw e;
+  }
+  console.error(error);
+}
 
-export const isProduction = process.env.NODE_ENV === 'production';
-
-export const ACCESS_TOKEN_EXPIRY = process.env.ACCESS_TOKEN_EXPIRY || '1d';
-export const REFRESH_TOKEN_EXPIRY = process.env.REFRESH_TOKEN_EXPIRY || '30d';
-export const CLIENT_APP_URL = process.env.CLIENT_APP_URL as string;
-export const FROM_EMAIL = process.env.FROM_EMAIL as string;
-
-export const AWS_ACCESS_KEY = process.env.AWS_ACCESS_KEY as string;
-export const AWS_SECRET_KEY = process.env.AWS_SECRET_KEY as string;
-export const AWS_REGION = process.env.AWS_REGION as string;
+export default EnvSchema.parse(process.env);

@@ -1,8 +1,6 @@
 import { and, desc, eq, type SQL } from 'drizzle-orm';
 import type { NextFunction, Request, Response } from 'express';
 
-import { isProduction } from '@/src/utils/env';
-
 import { verificationToken } from '@/src/modules/verification-token/verification-token.schema';
 import type {
   VerificationTokenStatus,
@@ -10,6 +8,8 @@ import type {
 } from '@/src/modules/verification-token/verification-token.type';
 
 import { db } from '@/src/db';
+
+import { isProduction } from '@/src/utils';
 
 interface GetLatestVerificationTokenParams {
   email?: string | undefined;

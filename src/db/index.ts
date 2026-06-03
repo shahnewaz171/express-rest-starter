@@ -1,13 +1,15 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 
-import { DATABASE_URL, isProduction } from '@/src/utils/env';
+import env from '@/src/utils/env';
 import { CustomError } from '@/src/utils/error';
 
 import * as schema from '@/src/db/schema';
 
+import { isProduction } from '@/src/utils';
+
 export const pool = new Pool({
-  connectionString: DATABASE_URL,
+  connectionString: env.DATABASE_URL,
   connectionTimeoutMillis: 60000,
   idleTimeoutMillis: 10000,
   max: 100,

@@ -10,7 +10,7 @@ services:
       - "${PORT}:${PORT}"
     environment:
       NODE_ENV: production
-      POSTGRES_URL: postgresql://${PG_USER}:${PG_PASSWORD}@${PG_HOST}:${PG_PORT}/${PG_DATABASE}
+      DATABASE_URL: postgresql://${PG_USER}:${PG_PASSWORD}@${PG_HOST}:${PG_PORT}/${PG_DATABASE}
     depends_on:
       postgres:
         condition: service_healthy
