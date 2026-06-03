@@ -4,8 +4,8 @@ import jwt, { type JwtPayload } from 'jsonwebtoken';
 
 import { JWT_ISSUER, JWT_SECRET } from '@/src/utils/env';
 
+import * as commonHelper from '@/src/modules/common/common.helper';
 import type { GenerateJWTOptions } from '@/src/modules/common/common.type';
-import { commonHelper } from '@/src/modules/helpers';
 
 export const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
 

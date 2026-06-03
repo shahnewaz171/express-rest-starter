@@ -11,7 +11,6 @@ import type {
   CreateRolePermissionInput,
   UpdateRolePermissionInput
 } from '@/src/modules/role-permission/role-permission.type';
-import type { PermissionsOfARole } from '@/src/modules/user/user.type';
 
 import type { DB } from '@/src/db';
 import { db, useTransaction } from '@/src/db';
@@ -124,7 +123,7 @@ export const createARolePermissionForMutation = async (
 };
 
 export const updateARolePermissionForMutation = async (
-  params: PermissionsOfARole,
+  params: { entity_id: string; can_do_the_action: boolean },
   user: { user_id: string },
   tx: DB = db
 ) => {

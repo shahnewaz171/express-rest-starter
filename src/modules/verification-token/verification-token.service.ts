@@ -1,8 +1,9 @@
 import dayjs from 'dayjs';
 import { and, eq, type SQL } from 'drizzle-orm';
 
-import { commonHelper, userHelper } from '@/src/modules/helpers';
+import * as commonHelper from '@/src/modules/common/common.helper';
 import * as notificationService from '@/src/modules/notification/notification.service';
+import * as userHelper from '@/src/modules/user/user.helper';
 import type { NewVerificationToken } from '@/src/modules/verification-token/verification-token.schema';
 import { verificationToken } from '@/src/modules/verification-token/verification-token.schema';
 import type {

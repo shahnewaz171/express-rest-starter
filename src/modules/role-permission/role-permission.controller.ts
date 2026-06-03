@@ -1,9 +1,9 @@
 import type { NextFunction, Request, Response } from 'express';
 
-import { getOptionsFromQuery } from '@/src/modules/common/common.helper';
-import { rolePermissionHelper } from '@/src/modules/helpers';
+import * as commonHelper from '@/src/modules/common/common.helper';
+import * as rolePermissionHelper from '@/src/modules/role-permission/role-permission.helper';
+import * as rolePermissionService from '@/src/modules/role-permission/role-permission.service';
 import type { RolePermissionQueryParams } from '@/src/modules/role-permission/role-permission.type';
-import { rolePermissionService } from '@/src/modules/services';
 import type { AuthRequest } from '@/src/modules/user/user.type';
 
 import { useTransaction } from '@/src/db';
@@ -59,7 +59,9 @@ export const rolePermissionController = {
   getRolePermissions: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const queryParams = req.query as unknown as RolePermissionQueryParams;
-      const options = getOptionsFromQuery(req.query as Record<string, string | undefined>);
+      const options = commonHelper.getOptionsFromQuery(
+        req.query as Record<string, string | undefined>
+      );
       const [data, total] = await Promise.all([
         rolePermissionHelper.getRolePermissions(queryParams, options),
         rolePermissionHelper.countRolePermissions(queryParams)

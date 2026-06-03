@@ -4,9 +4,9 @@ import size from 'lodash/size';
 
 import { CustomError } from '@/src/utils/error';
 
-import { userHelper } from '@/src/modules/helpers';
+import * as commonService from '@/src/modules/common/common.service';
 import type { RoleName } from '@/src/modules/role/role.type';
-import { commonService } from '@/src/modules/services';
+import * as userHelper from '@/src/modules/user/user.helper';
 import type { AuthRequest } from '@/src/modules/user/user.type';
 
 export const validateTokenAndGetAuthUser = async (token: string) => {

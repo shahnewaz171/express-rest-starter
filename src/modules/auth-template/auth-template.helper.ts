@@ -4,7 +4,7 @@ import { CustomError } from '@/src/utils/error';
 
 import { authTemplate } from '@/src/modules/auth-template/auth-template.schema';
 import type { AuthTemplateQueryParams } from '@/src/modules/auth-template/auth-template.type';
-import { getOptionsFromQuery } from '@/src/modules/common/common.helper';
+import * as commonHelper from '@/src/modules/common/common.helper';
 import type { QueryOptions } from '@/src/modules/common/common.type';
 
 import type { DB } from '@/src/db';
@@ -92,7 +92,7 @@ export const getAuthTemplatesForQuery = async (
   params: AuthTemplateQueryParams & QueryOptions,
   tx?: DB
 ) => {
-  const { limit, offset } = getOptionsFromQuery(params);
+  const { limit, offset } = commonHelper.getOptionsFromQuery(params);
   const where = prepareAuthTemplateQuery(params);
 
   const [data, totalRows] = await Promise.all([

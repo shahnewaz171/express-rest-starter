@@ -4,6 +4,7 @@ import omit from 'lodash/omit';
 import { CustomError } from '@/src/utils/error';
 
 import * as authTokenService from '@/src/modules/auth-token/auth-token.service';
+import * as commonHelper from '@/src/modules/common/common.helper';
 import * as commonService from '@/src/modules/common/common.service';
 import {
   changePasswordSchema,
@@ -15,14 +16,15 @@ import {
   registerSchema,
   verifyForgotPasswordSchema
 } from '@/src/modules/common/common.validation';
-import { commonHelper, userHelper, verificationTokenHelper } from '@/src/modules/helpers';
 import * as roleUserService from '@/src/modules/role-user/role-user.service';
+import * as userHelper from '@/src/modules/user/user.helper';
 import { user } from '@/src/modules/user/user.schema';
 import type {
   GetUsersParams,
   LoginUserInput,
   RegisterUserInput
 } from '@/src/modules/user/user.type';
+import * as verificationTokenHelper from '@/src/modules/verification-token/verification-token.helper';
 import { verificationToken } from '@/src/modules/verification-token/verification-token.schema';
 import * as verificationTokenService from '@/src/modules/verification-token/verification-token.service';
 import type { CreateVerificationTokenInput } from '@/src/modules/verification-token/verification-token.type';

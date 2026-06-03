@@ -1,9 +1,9 @@
 import type { NextFunction, Request, Response } from 'express';
 
-import { getOptionsFromQuery } from '@/src/modules/common/common.helper';
-import { roleUserHelper } from '@/src/modules/helpers';
+import * as commonHelper from '@/src/modules/common/common.helper';
+import * as roleUserHelper from '@/src/modules/role-user/role-user.helper';
+import * as roleUserService from '@/src/modules/role-user/role-user.service';
 import type { RoleUserQueryParams } from '@/src/modules/role-user/role-user.type';
-import { roleUserService } from '@/src/modules/services';
 
 import { useTransaction } from '@/src/db';
 
@@ -50,7 +50,9 @@ export const roleUserController = {
   getRoleUsers: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const queryParams = req.query as unknown as RoleUserQueryParams;
-      const options = getOptionsFromQuery(req.query as Record<string, string | undefined>);
+      const options = commonHelper.getOptionsFromQuery(
+        req.query as Record<string, string | undefined>
+      );
       const [data, total] = await Promise.all([
         roleUserHelper.getRoleUsers(queryParams, options),
         roleUserHelper.countRoleUsers(queryParams)

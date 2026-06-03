@@ -2,10 +2,7 @@ import { eq } from 'drizzle-orm';
 
 import { CustomError } from '@/src/utils/error';
 
-import {
-  getAnAuthTemplateForQuery,
-  getAuthTemplatesForQuery
-} from '@/src/modules/auth-template/auth-template.helper';
+import * as authTemplateHelper from '@/src/modules/auth-template/auth-template.helper';
 import type { NewAuthTemplate } from '@/src/modules/auth-template/auth-template.schema';
 import { authTemplate } from '@/src/modules/auth-template/auth-template.schema';
 import type {
@@ -75,7 +72,7 @@ export const updateAnAuthTemplateForMutation = async (
   params: AuthTemplateQueryParams & UpdateAuthTemplateInput,
   tx?: DB
 ) => {
-  const template = await getAnAuthTemplateForQuery(params, tx);
+  const template = await authTemplateHelper.getAnAuthTemplateForQuery(params, tx);
 
   const updateData: UpdateAuthTemplateInput = {};
   if (params.body !== undefined) updateData.body = params.body;
@@ -86,9 +83,7 @@ export const updateAnAuthTemplateForMutation = async (
 };
 
 export const removeAnAuthTemplateForMutation = async (params: AuthTemplateQueryParams, tx?: DB) => {
-  const template = await getAnAuthTemplateForQuery(params, tx);
+  const template = await authTemplateHelper.getAnAuthTemplateForQuery(params, tx);
 
   return deleteAnAuthTemplate(template.id, tx);
 };
-
-export { getAuthTemplatesForQuery };

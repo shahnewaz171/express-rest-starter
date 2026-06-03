@@ -3,6 +3,7 @@ import { and, eq, type SQL } from 'drizzle-orm';
 import { ACCESS_TOKEN_EXPIRY, REFRESH_TOKEN_EXPIRY } from '@/src/utils/env';
 import { CustomError } from '@/src/utils/error';
 
+import * as authTokenHelper from '@/src/modules/auth-token/auth-token.helper';
 import type { NewAuthToken } from '@/src/modules/auth-token/auth-token.schema';
 import { authToken } from '@/src/modules/auth-token/auth-token.schema';
 import type {
@@ -11,7 +12,6 @@ import type {
   VerifyTokenInput
 } from '@/src/modules/auth-token/auth-token.type';
 import * as commonService from '@/src/modules/common/common.service';
-import { authTokenHelper } from '@/src/modules/helpers';
 
 import type { DB } from '@/src/db';
 import { db } from '@/src/db';

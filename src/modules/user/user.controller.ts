@@ -2,8 +2,9 @@ import type { NextFunction, Request, Response } from 'express';
 
 import { CustomError } from '@/src/utils/error';
 
-import { commonHelper, userHelper } from '@/src/modules/helpers';
-import { userService } from '@/src/modules/services';
+import * as commonHelper from '@/src/modules/common/common.helper';
+import * as userHelper from '@/src/modules/user/user.helper';
+import * as userService from '@/src/modules/user/user.service';
 import type { AuthRequest } from '@/src/modules/user/user.type';
 
 import { useTransaction } from '@/src/db';

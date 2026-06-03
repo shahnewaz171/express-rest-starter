@@ -4,8 +4,8 @@ import isEmpty from 'lodash/isEmpty';
 import join from 'lodash/join';
 import map from 'lodash/map';
 
-import { commonHelper } from '@/src/modules/helpers';
-import { getTopRoleOfAUser } from '@/src/modules/role/role.helper';
+import * as commonHelper from '@/src/modules/common/common.helper';
+import * as roleHelper from '@/src/modules/role/role.helper';
 import type { RoleName } from '@/src/modules/role/role.type';
 import { user } from '@/src/modules/user/user.schema';
 import type { PermissionsOfARole, UserQueryParams } from '@/src/modules/user/user.type';
@@ -174,7 +174,7 @@ export const getAuthUserWithRolesAndPermissions = async (params: {
   }
 
   const userRoles = map(userResult.role_users, (ru) => ru.role?.name).filter(Boolean) as RoleName[];
-  const topRole = getTopRoleOfAUser(userRoles);
+  const topRole = roleHelper.getTopRoleOfAUser(userRoles);
 
   const permissions: Record<string, PermissionsOfARole[]> = {};
   const topRolePermissions =

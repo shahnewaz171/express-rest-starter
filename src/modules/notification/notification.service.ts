@@ -5,8 +5,8 @@ import MailComposer from 'nodemailer/lib/mail-composer';
 
 import { AWS_ACCESS_KEY, AWS_REGION, AWS_SECRET_KEY, FROM_EMAIL } from '@/src/utils/env';
 
+import * as authTemplateHelper from '@/src/modules/auth-template/auth-template.helper';
 import { authTemplate } from '@/src/modules/auth-template/auth-template.schema';
-import { authTemplateHelper } from '@/src/modules/helpers';
 import type {
   SendEmailParams,
   SendNotificationParams
