@@ -1,6 +1,8 @@
 import dayjs from 'dayjs';
 import { and, eq, type SQL } from 'drizzle-orm';
 
+import { CLIENT_APP_URL } from '@/src/utils/env';
+
 import * as commonHelper from '@/src/modules/common/common.helper';
 import * as notificationService from '@/src/modules/notification/notification.service';
 import * as userHelper from '@/src/modules/user/user.helper';
@@ -64,7 +66,7 @@ export const createAVerificationTokenForUser = async (
 ) => {
   const { email, first_name, last_name, type, user_id } = params;
 
-  const token = commonHelper.getRandomNumber(6);
+  const token = commonHelper.getGeneratedOTP();
 
   const created = await createAVerificationToken({ email, token, type, user_id }, tx);
 
@@ -82,7 +84,7 @@ export const createAVerificationTokenForUser = async (
     variables: {
       email,
       token: created.token,
-      url: process.env.CLIENT_APP_URL || '',
+      url: CLIENT_APP_URL || '',
       username: userHelper.getUsernameByNames(email, first_name, last_name)
     }
   });

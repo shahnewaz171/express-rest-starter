@@ -1,4 +1,4 @@
-import { randomInt } from 'node:crypto';
+import crypto from 'node:crypto';
 import find from 'lodash/find';
 import isFiniteNumber from 'lodash/isFinite';
 import validator from 'validator';
@@ -26,14 +26,7 @@ export const getOptionsFromQuery = (query: QueryOptions) => {
   };
 };
 
-export const getRandomNumber = (length: number) => {
-  let result = '';
-  for (let i = 0; i < length; i += 1) {
-    result += randomInt(0, 10).toString();
-  }
-
-  return result;
-};
+export const getGeneratedOTP = () => crypto.randomInt(100000, 999999).toString();
 
 export const getRandomString = () => crypto.randomUUID();
 

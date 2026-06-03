@@ -1,4 +1,4 @@
-import { and, eq, or, type SQL, sql } from 'drizzle-orm';
+import { and, eq, not, or, type SQL, sql } from 'drizzle-orm';
 import omit from 'lodash/omit';
 
 import { CustomError } from '@/src/utils/error';
@@ -289,7 +289,10 @@ export const changeEmailByUser = async (params: { user_id: string; new_email: st
   }
 
   const emailExists = await tx.query.user.findFirst({
-    where: eq(user.email, emailParsed.data)
+    where: and(
+      or(eq(user.email, emailParsed.data), eq(user.new_email, emailParsed.data)),
+      not(eq(user.id, params.user_id))
+    )
   });
 
   if (emailExists) {
@@ -413,7 +416,10 @@ export const setUserEmailByAdmin = async (
   }
 
   const emailExists = await tx.query.user.findFirst({
-    where: eq(user.email, emailParsed.data)
+    where: and(
+      or(eq(user.email, emailParsed.data), eq(user.new_email, emailParsed.data)),
+      not(eq(user.id, params.user_id))
+    )
   });
 
   if (emailExists) {
