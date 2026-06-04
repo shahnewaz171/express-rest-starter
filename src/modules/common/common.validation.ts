@@ -24,35 +24,3 @@ export const excludeIncludeSchema = z.object({
   exclude_entity_ids: z.array(uuidSchema).optional(),
   include_entity_ids: z.array(uuidSchema).optional()
 });
-
-export const loginSchema = z.object({
-  email: emailSchema,
-  password: z.string().min(1)
-});
-
-export const registerSchema = z.object({
-  email: emailSchema,
-  first_name: z.string().min(1),
-  last_name: z.string().min(1),
-  password: passwordSchema
-});
-
-export const forgotPasswordSchema = z.object({
-  email: emailSchema
-});
-
-export const verifyForgotPasswordSchema = z.object({
-  email: emailSchema,
-  password: passwordSchema,
-  token: z.string().min(1)
-});
-
-export const changePasswordSchema = z.object({
-  old_password: z.string().min(1),
-  new_password: passwordSchema
-});
-
-export const refreshTokenSchema = z.object({
-  access_token: z.string().min(1),
-  refresh_token: z.string().min(1)
-});

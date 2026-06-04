@@ -1,13 +1,21 @@
 import { and, desc, eq, type SQL } from 'drizzle-orm';
 import type { NextFunction, Request, Response } from 'express';
+import { z } from 'zod';
 
-import { verificationToken } from '@/src/modules/verification-token/verification-token.schema';
+import { emailSchema, uuidSchema } from '@/src/modules/common/common.validation';
+import { user } from '@/src/modules/user/user.schema';
+import {
+  verificationToken,
+  verificationTokenStatusEnum,
+  verificationTokenTypeEnum
+} from '@/src/modules/verification-token/verification-token.schema';
 import type {
   VerificationTokenStatus,
   VerificationTokenType
 } from '@/src/modules/verification-token/verification-token.type';
 
 import { db } from '@/src/db';
+// import users from '@/src/db/seeds/data/users.json' with { type: 'json' };
 
 import { isProduction } from '@/src/utils';
 
@@ -17,6 +25,19 @@ interface GetLatestVerificationTokenParams {
   type?: VerificationTokenType | undefined;
   user_id?: string | undefined;
 }
+
+// const seededEmails = new Set(users.map((u) => u.email.toLowerCase()));
+
+const testVerificationTokenQuerySchema = z
+  .object({
+    email: emailSchema.optional(),
+    status: z.enum(verificationTokenStatusEnum.enumValues).optional(),
+    type: z.enum(verificationTokenTypeEnum.enumValues).optional(),
+    user_id: uuidSchema.optional()
+  })
+  .refine((value) => Boolean(value.email || value.user_id), {
+    message: 'EMAIL_OR_USER_ID_IS_REQUIRED'
+  });
 
 const getLatestVerificationToken = async (params: GetLatestVerificationTokenParams = {}) => {
   const { email, status = 'unverified', type, user_id } = params;
@@ -46,12 +67,43 @@ export const testVerificationTokenRouter = async (
       return res.status(403).json({ message: 'Forbidden in production environment' });
     }
 
-    const { email, status, type, user_id } = req.query as Record<string, string>;
+    const parsed = testVerificationTokenQuerySchema.safeParse(req.query);
+
+    if (!parsed.success) {
+      return res
+        .status(400)
+        .json({ message: parsed.error.issues[0]?.message ?? 'VALIDATION_ERROR' });
+    }
+
+    const { email, status, type, user_id } = parsed.data;
+
+    // if (email && !seededEmails.has(email)) {
+    //   return res.status(400).json({ message: 'SEED_USER_EMAIL_REQUIRED' });
+    // }
+
+    if (user_id) {
+      const foundUser = await db.query.user.findFirst({
+        where: eq(user.id, user_id),
+        columns: { email: true }
+      });
+
+      if (!foundUser) {
+        return res.status(404).json({ message: 'USER_DOES_NOT_EXIST' });
+      }
+
+      // if (!seededEmails.has(foundUser.email.toLowerCase())) {
+      //   return res.status(400).json({ message: 'SEED_USER_ID_REQUIRED' });
+      // }
+
+      if (email && foundUser.email.toLowerCase() !== email.toLowerCase()) {
+        return res.status(400).json({ message: 'EMAIL_AND_USER_ID_MISMATCH' });
+      }
+    }
 
     const token = await getLatestVerificationToken({
       email,
-      status: status as 'cancelled' | 'verified' | 'unverified' | undefined,
-      type: type as 'forgot_password' | 'user_verification' | undefined,
+      status: status as VerificationTokenStatus | undefined,
+      type: type as VerificationTokenType | undefined,
       user_id
     });
 

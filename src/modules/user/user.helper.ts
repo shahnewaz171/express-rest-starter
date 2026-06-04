@@ -170,7 +170,7 @@ export const getAuthUserWithRolesAndPermissions = async (params: {
   });
 
   if (!userResult?.id) {
-    throw new Error('USER_NOT_FOUND');
+    throw new Error('USER_DOES_NOT_EXIST');
   }
 
   const userRoles = map(userResult.role_users, (ru) => ru.role?.name).filter(Boolean) as RoleName[];

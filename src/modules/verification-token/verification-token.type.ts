@@ -8,8 +8,8 @@ export type VerificationTokenType = (typeof verificationTokenTypeEnum.enumValues
 
 export interface CreateVerificationTokenInput {
   email: string;
-  first_name?: string;
-  last_name?: string;
+  first_name?: string | null;
+  last_name?: string | null;
   type: VerificationTokenType;
   user_id: string;
   event?: string;

@@ -11,6 +11,7 @@ import type {
   RevokeTokenInput,
   VerifyTokenInput
 } from '@/src/modules/auth-token/auth-token.type';
+import { revokeAnAuthTokenSchema } from '@/src/modules/auth-token/auth-token.validation';
 import * as commonService from '@/src/modules/common/common.service';
 
 import type { DB } from '@/src/db';
@@ -108,7 +109,10 @@ export const refreshAuthTokensForUser = async (params: RefreshTokenInput, tx?: D
   }
 
   if (user.status !== 'active') {
-    throw new CustomError(400, 'USER_IS_NOT_ACTIVE');
+    throw new CustomError(
+      400,
+      user.status ? `USER_IS_${user.status.toUpperCase()}` : 'USER_IS_NOT_ACTIVE'
+    );
   }
 
   await deleteAnAuthToken(eq(authToken.id, existingToken.id), tx);
@@ -119,6 +123,11 @@ export const refreshAuthTokensForUser = async (params: RefreshTokenInput, tx?: D
 };
 
 export const revokeAnAuthTokenForUser = async (params: RevokeTokenInput, tx?: DB) => {
+  const paramsParsed = revokeAnAuthTokenSchema.safeParse(params);
+  if (!paramsParsed.success) {
+    throw new CustomError(400, 'TOKEN_IS_INVALID');
+  }
+
   const { token, type } = params;
 
   const where =
