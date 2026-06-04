@@ -2,6 +2,7 @@ import dayjs from 'dayjs';
 import { and, eq, type SQL } from 'drizzle-orm';
 
 import env from '@/src/utils/env';
+import { CustomError } from '@/src/utils/error';
 
 import * as commonHelper from '@/src/modules/common/common.helper';
 import * as notificationService from '@/src/modules/notification/notification.service';
@@ -71,7 +72,7 @@ export const createAVerificationTokenForUser = async (
   const created = await createAVerificationToken({ email, token, type, user_id }, tx);
 
   if (!created) {
-    throw new Error('FAILED_TO_CREATE_VERIFICATION_TOKEN');
+    throw new CustomError(500, 'FAILED_TO_CREATE_VERIFICATION_TOKEN');
   }
 
   const event =
@@ -117,27 +118,29 @@ export const validateVerificationTokenForUser = async (
   const existingToken = await tx.query.verificationToken.findFirst({ where });
 
   if (!existingToken) {
-    throw new Error('OTP_IS_NOT_VALID');
+    throw new CustomError(400, 'OTP_IS_NOT_VALID');
   }
 
-  if (dayjs(existingToken.expires_at).isBefore(dayjs())) {
-    throw new Error('OTP_IS_EXPIRED');
+  const isExpired = dayjs(existingToken.expires_at).isBefore(dayjs());
+  if (isExpired) {
+    throw new CustomError(400, 'OTP_IS_EXPIRED');
   }
 
-  const deleteConditions: SQL[] = [
+  const updateConditions: SQL[] = [
     eq(verificationToken.token, token),
-    eq(verificationToken.type, type)
+    eq(verificationToken.type, type),
+    eq(verificationToken.status, 'unverified')
   ];
 
   if (email) {
-    deleteConditions.push(eq(verificationToken.email, email));
+    updateConditions.push(eq(verificationToken.email, email));
   }
 
   if (user_id) {
-    deleteConditions.push(eq(verificationToken.user_id, user_id));
+    updateConditions.push(eq(verificationToken.user_id, user_id));
   }
 
-  await deleteVerificationTokens(and(...deleteConditions) as SQL, tx);
+  await updateVerificationTokens(and(...updateConditions) as SQL, { status: 'verified' }, tx);
 
   return existingToken;
 };

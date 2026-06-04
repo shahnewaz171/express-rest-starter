@@ -132,7 +132,6 @@ CREATE INDEX "users_name_idx" ON "users" USING btree ("first_name","last_name");
 CREATE INDEX "users_status_idx" ON "users" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "users_created_at_idx" ON "users" USING btree ("created_at");--> statement-breakpoint
 CREATE INDEX "users_updated_at_idx" ON "users" USING btree ("updated_at");--> statement-breakpoint
-CREATE UNIQUE INDEX "otp_email_type_unique" ON "verification_tokens" USING btree ("email","type");--> statement-breakpoint
 CREATE INDEX "verification_tokens_user_type_created_idx" ON "verification_tokens" USING btree ("user_id","type","created_at");--> statement-breakpoint
 CREATE INDEX "verification_tokens_user_type_status_idx" ON "verification_tokens" USING btree ("user_id","type","status");--> statement-breakpoint
 CREATE INDEX "verification_tokens_created_at_idx" ON "verification_tokens" USING btree ("created_at");--> statement-breakpoint

@@ -11,6 +11,7 @@ import { refreshTokenSchema } from '@/src/modules/auth-token/auth-token.validati
 import * as commonHelper from '@/src/modules/common/common.helper';
 import * as commonService from '@/src/modules/common/common.service';
 import { emailSchema } from '@/src/modules/common/common.validation';
+import * as notificationService from '@/src/modules/notification/notification.service';
 import * as roleUserService from '@/src/modules/role-user/role-user.service';
 import * as userHelper from '@/src/modules/user/user.helper';
 import { user } from '@/src/modules/user/user.schema';
@@ -250,7 +251,6 @@ export const resendUserVerificationEmail = async (params: { email: string }, tx:
   }
 
   const tenMinutesAgo = dayjs().subtract(10, 'minute').toDate();
-
   const recentTokens = await tx.query.verificationToken.findMany({
     where: and(
       eq(verificationToken.user_id, existingUser.id),
@@ -263,19 +263,25 @@ export const resendUserVerificationEmail = async (params: { email: string }, tx:
     throw new CustomError(429, 'TOO_MANY_RESEND_VERIFICATION_REQUESTS');
   }
 
-  await verificationTokenService.deleteVerificationTokens(
+  await verificationTokenService.updateVerificationTokens(
     and(
       eq(verificationToken.user_id, existingUser.id),
       eq(verificationToken.type, 'user_verification'),
       eq(verificationToken.status, 'unverified')
     ) as SQL,
+    { status: 'cancelled' },
     tx
   );
 
+  const isEmailChange = Boolean(existingUser.new_email);
+  const targetEmail = existingUser.new_email ?? existingUser.email;
+
   const vData2: CreateVerificationTokenInput = {
-    ...pick(existingUser, ['email', 'first_name', 'last_name']),
+    ...pick(existingUser, ['first_name', 'last_name']),
+    email: targetEmail,
     type: 'user_verification',
-    user_id: existingUser.id
+    user_id: existingUser.id,
+    ...(isEmailChange && { event: 'send_change_email_token' })
   };
 
   const created = await verificationTokenService.createAVerificationTokenForUser(vData2, tx);
@@ -327,17 +333,19 @@ export const changeEmailByUser = async (params: { user_id: string; new_email: st
     .where(eq(user.id, user_id))
     .returning();
 
-  await verificationTokenService.deleteVerificationTokens(
+  await verificationTokenService.updateVerificationTokens(
     and(
       eq(verificationToken.user_id, existingUser.id),
       eq(verificationToken.type, 'user_verification'),
       inArray(verificationToken.status, ['cancelled', 'unverified'])
     ) as SQL,
+    { status: 'cancelled' },
     tx
   );
 
   const vData1: CreateVerificationTokenInput = {
-    ...pick(existingUser, ['email', 'first_name', 'last_name']),
+    ...pick(existingUser, ['first_name', 'last_name']),
+    email: new_email,
     type: 'user_verification',
     user_id: existingUser.id,
     event: 'send_change_email_token'
@@ -372,16 +380,17 @@ export const cancelChangeEmailByUser = async (params: { email: string }, tx: DB)
     .where(eq(user.id, existingUser.id))
     .returning();
 
-  const deletedTokens = await verificationTokenService.deleteVerificationTokens(
+  const cancelledTokens = await verificationTokenService.updateVerificationTokens(
     and(
       eq(verificationToken.user_id, existingUser.id),
       eq(verificationToken.type, 'user_verification'),
       inArray(verificationToken.status, ['cancelled', 'unverified'])
     ) as SQL,
+    { status: 'cancelled' },
     tx
   );
 
-  if (!deletedTokens || size(deletedTokens) <= 0) {
+  if (!cancelledTokens || size(cancelledTokens) <= 0) {
     throw new CustomError(400, 'NO_CHANGE_EMAIL_REQUEST_IS_FOUND');
   }
 
@@ -429,6 +438,19 @@ export const verifyChangeEmailByUser = async (
     .where(eq(user.id, params.user_id))
     .returning();
 
+  await notificationService.sendNotification({
+    event: 'send_email_changed',
+    to_email: existingUser.new_email,
+    variables: {
+      email: existingUser.new_email,
+      username: userHelper.getUsernameByNames(
+        existingUser.new_email,
+        existingUser.first_name,
+        existingUser.last_name
+      )
+    }
+  });
+
   return omit(updatedUser, ['created_at', 'new_email', 'old_passwords', 'password', 'updated_at']);
 };
 
@@ -465,6 +487,19 @@ export const setUserEmailByAdmin = async (
     .set({ email: emailParsed.data, new_email: null })
     .where(eq(user.id, params.user_id))
     .returning();
+
+  await notificationService.sendNotification({
+    event: 'send_email_changed',
+    to_email: emailParsed.data,
+    variables: {
+      email: emailParsed.data,
+      username: userHelper.getUsernameByNames(
+        emailParsed.data,
+        existingUser.first_name,
+        existingUser.last_name
+      )
+    }
+  });
 
   return omit(updatedUser, ['created_at', 'new_email', 'old_passwords', 'password', 'updated_at']);
 };
@@ -534,6 +569,19 @@ export const changePasswordByUser = async (
 
   await authTokenService.revokeAuthTokensForUser({ user_id: params.user_id }, tx);
 
+  await notificationService.sendNotification({
+    event: 'send_password_changed',
+    to_email: existingUser.email,
+    variables: {
+      email: existingUser.email,
+      username: userHelper.getUsernameByNames(
+        existingUser.email,
+        existingUser.first_name,
+        existingUser.last_name
+      )
+    }
+  });
+
   return omit(updatedUser, ['created_at', 'new_email', 'old_passwords', 'password', 'updated_at']);
 };
 
@@ -568,6 +616,19 @@ export const changePasswordByAdmin = async (
 
   await authTokenService.revokeAuthTokensForUser({ user_id: params.user_id }, tx);
 
+  await notificationService.sendNotification({
+    event: 'send_password_changed',
+    to_email: existingUser.email,
+    variables: {
+      email: existingUser.email,
+      username: userHelper.getUsernameByNames(
+        existingUser.email,
+        existingUser.first_name,
+        existingUser.last_name
+      )
+    }
+  });
+
   return omit(updatedUser, ['created_at', 'new_email', 'old_passwords', 'password', 'updated_at']);
 };
 
@@ -598,12 +659,13 @@ export const forgotPassword = async (params: { email: string }, tx: DB) => {
     throw new CustomError(429, 'TOO_MANY_FORGOT_PASSWORD_REQUESTS');
   }
 
-  await verificationTokenService.deleteVerificationTokens(
+  await verificationTokenService.updateVerificationTokens(
     and(
       eq(verificationToken.user_id, existingUser.id),
       eq(verificationToken.type, 'forgot_password'),
       eq(verificationToken.status, 'unverified')
     ) as SQL,
+    { status: 'cancelled' },
     tx
   );
 
@@ -645,12 +707,13 @@ export const retryForgotPassword = async (params: { email: string }, tx: DB) => 
     throw new CustomError(429, 'TOO_MANY_FORGOT_PASSWORD_REQUESTS');
   }
 
-  await verificationTokenService.deleteVerificationTokens(
+  await verificationTokenService.updateVerificationTokens(
     and(
       eq(verificationToken.user_id, existingUser.id),
       eq(verificationToken.type, 'forgot_password'),
       eq(verificationToken.status, 'unverified')
     ) as SQL,
+    { status: 'cancelled' },
     tx
   );
 
@@ -757,6 +820,19 @@ export const verifyForgotPassword = async (
 
   await authTokenService.revokeAuthTokensForUser({ user_id: existingUser.id }, tx);
 
+  await notificationService.sendNotification({
+    event: 'send_password_changed',
+    to_email: existingUser.email,
+    variables: {
+      email: existingUser.email,
+      username: userHelper.getUsernameByNames(
+        existingUser.email,
+        existingUser.first_name,
+        existingUser.last_name
+      )
+    }
+  });
+
   return omit(updatedUser, ['created_at', 'new_email', 'old_passwords', 'password', 'updated_at']);
 };
 
@@ -790,7 +866,7 @@ export const verifyUserPassword = async (params: { user_id: string; password: st
 };
 
 export const refreshTokensForUser = async (
-  params: { access_token: string; refresh_token: string },
+  params: { access_token?: string; refresh_token: string },
   tx: DB
 ) => {
   const parsed = refreshTokenSchema.safeParse(params);
@@ -798,26 +874,46 @@ export const refreshTokensForUser = async (
     throw new CustomError(400, parsed.error.issues.map((i) => i.message).join(', '));
   }
 
-  const { user_id, roles } = commonService.decodeJWTToken(parsed.data.access_token) || {};
-
-  if (!user_id) {
-    throw new CustomError(400, 'INVALID_ACCESS_TOKEN');
+  const refreshVerification = commonService.verifyJWTToken(parsed.data.refresh_token);
+  if (!refreshVerification.success) {
+    throw new CustomError(400, 'INVALID_REFRESH_TOKEN');
   }
 
-  const freshUser = await userHelper.getAuthUserWithRolesAndPermissions({
-    roles,
-    user_id,
-    tx
+  const refreshPayload = refreshVerification.payload as { user_id?: string } | undefined;
+
+  if (!refreshPayload?.user_id) {
+    throw new CustomError(400, 'INVALID_TOKEN_PAYLOAD');
+  }
+
+  const existingUser = await tx.query.user.findFirst({
+    where: eq(user.id, refreshPayload.user_id),
+    with: {
+      role_users: {
+        with: {
+          role: true
+        }
+      }
+    }
   });
-  if (!freshUser) {
+
+  if (!existingUser) {
     throw new CustomError(404, 'USER_DOES_NOT_EXIST');
+  }
+
+  if (existingUser.status !== 'active') {
+    throw new CustomError(400, `USER_IS_${existingUser.status.toUpperCase()}`);
+  }
+
+  const roles = existingUser.role_users.map((ru) => ru.role?.name ?? '').filter(Boolean);
+  if (roles.length <= 0) {
+    throw new CustomError(400, 'USER_HAS_NO_ROLE');
   }
 
   const tokens = await authTokenService.refreshAuthTokensForUser(
     {
       refresh_token: parsed.data.refresh_token,
-      roles: freshUser.roles,
-      user_id
+      roles,
+      user_id: refreshPayload.user_id
     },
     tx
   );

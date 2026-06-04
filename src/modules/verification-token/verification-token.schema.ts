@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { index, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { index, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 import { user } from '@/src/modules/user/user.schema';
 
@@ -34,7 +34,6 @@ export const verificationToken = pgTable(
       .$onUpdate(() => new Date())
   },
   (table) => [
-    uniqueIndex('otp_email_type_unique').on(table.email, table.type),
     index('verification_tokens_user_type_created_idx').on(
       table.user_id,
       table.type,

@@ -59,12 +59,22 @@ export const createAuthTokensForUser = async (
 export const verifyAnAuthTokenForUser = async (params: VerifyTokenInput, tx?: DB) => {
   const { token, type } = params;
 
-  const { user_id } = (commonService.decodeJWTToken(token) as { user_id?: string }) || {};
+  const verification = commonService.verifyJWTToken(token);
+  if (!verification.success) {
+    return { message: verification.message, success: false };
+  }
+
+  const payload = verification.payload as { user_id?: string } | undefined;
+  const user_id = payload?.user_id;
+
+  if (!user_id) {
+    return { message: 'INVALID_TOKEN', success: false };
+  }
 
   const where =
     type === 'access_token'
-      ? and(eq(authToken.access_token, token), eq(authToken.user_id, user_id ?? ''))
-      : and(eq(authToken.refresh_token, token), eq(authToken.user_id, user_id ?? ''));
+      ? and(eq(authToken.access_token, token), eq(authToken.user_id, user_id))
+      : and(eq(authToken.refresh_token, token), eq(authToken.user_id, user_id));
 
   const authTokenData = where
     ? await authTokenHelper.getAnAuthToken({ where, ...(tx && { tx }) })
@@ -74,7 +84,7 @@ export const verifyAnAuthTokenForUser = async (params: VerifyTokenInput, tx?: DB
     return { message: 'INVALID_TOKEN', success: false };
   }
 
-  return commonService.verifyJWTToken(token) || {};
+  return verification;
 };
 
 export const refreshAuthTokensForUser = async (params: RefreshTokenInput, tx?: DB) => {

@@ -25,7 +25,7 @@ router.use('/role-users', roleUserRouter);
 
 router.use('/roles', roleRouter);
 
-router.use('/users', userRouter);
+router.use('/auth', userRouter);
 
 // Test routes: These routes are intended for testing purposes and should be removed or protected in production environments.
 router.get('/test/verification-tokens', testVerificationTokenRouter);

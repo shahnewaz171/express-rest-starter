@@ -23,22 +23,27 @@ const sesClient = new SESClient({
 });
 
 export const sendEmailBySES = async (params: SendEmailParams) => {
-  const mail = new MailComposer({
-    from: params.from_email || env.FROM_EMAIL,
-    to: params.to_email,
-    replyTo: params.reply_to || undefined,
-    subject: params.subject,
-    html: `<!DOCTYPE html><html><head><meta charset="UTF-8" /></head><body>${params?.html}</body></html>`
-  });
+  try {
+    const mail = new MailComposer({
+      from: params.from_email || env.FROM_EMAIL,
+      to: params.to_email,
+      replyTo: params.reply_to || undefined,
+      subject: params.subject,
+      html: `<!DOCTYPE html><html><head><meta charset="UTF-8" /></head><body>${params?.html}</body></html>`
+    });
 
-  const message = await mail.compile().build();
+    const message = await mail.compile().build();
 
-  const command = new SendRawEmailCommand({
-    RawMessage: { Data: message }
-  });
-  const response = await sesClient.send(command);
+    const command = new SendRawEmailCommand({
+      RawMessage: { Data: message }
+    });
+    const response = await sesClient.send(command);
 
-  return response;
+    return response;
+  } catch (error) {
+    console.error(`Failed to send SES email to "${params.to_email}"`, error);
+    throw error;
+  }
 };
 
 export const sendNotification = async (params: SendNotificationParams) => {
@@ -60,17 +65,23 @@ export const sendNotification = async (params: SendNotificationParams) => {
     throw new Error('MISSING_AUTH_TEMPLATE_BODY_OR_SUBJECT');
   }
 
-  const variables = params.variables || {};
-  const compiledBody = Handlebars.compile(template.body)(variables);
-  const compiledSubject = Handlebars.compile(template.subject)(variables);
+  try {
+    const variables = params.variables || {};
+    const compiledBody = Handlebars.compile(template.body)(variables);
+    const compiledSubject = Handlebars.compile(template.subject)(variables);
 
-  const emailParams: SendEmailParams = {
-    from_email: params.from_email ?? env.FROM_EMAIL,
-    to_email: params.to_email,
-    reply_to: params.reply_to ?? '',
-    subject: compiledSubject,
-    html: compiledBody
-  };
+    const emailParams: SendEmailParams = {
+      from_email: params.from_email ?? env.FROM_EMAIL,
+      to_email: params.to_email,
+      reply_to: params.reply_to ?? '',
+      subject: compiledSubject,
+      html: compiledBody
+    };
 
-  return sendEmailBySES(emailParams);
+    const result = await sendEmailBySES(emailParams);
+    return result;
+  } catch (error) {
+    console.error(`Failed to send notification for event "${params.event}"`, error);
+    throw error;
+  }
 };

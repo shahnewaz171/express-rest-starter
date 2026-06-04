@@ -1,4 +1,4 @@
-import { and, eq, type SQL } from 'drizzle-orm';
+import { and, eq, type SQL, sql } from 'drizzle-orm';
 
 import { authToken } from '@/src/modules/auth-token/auth-token.schema';
 
@@ -6,14 +6,9 @@ import type { DB } from '@/src/db';
 import { db } from '@/src/db';
 
 export const countAuthTokens = async (where?: SQL, tx: DB = db) => {
-  const conditions = where ? [where] : [];
+  const result = await tx.select({ count: sql<number>`count(*)` }).from(authToken).where(where);
 
-  const result = await tx
-    .select({ count: authToken.id })
-    .from(authToken)
-    .where(and(...conditions));
-
-  return result.length;
+  return Number(result[0]?.count ?? 0);
 };
 
 export const getAnAuthToken = async (options: {

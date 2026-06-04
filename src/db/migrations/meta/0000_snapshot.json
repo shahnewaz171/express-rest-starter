@@ -1,5 +1,5 @@
 {
-  "id": "44e72045-b701-4c0d-8299-94f6e919f330",
+  "id": "0c12cba7-c472-4d0e-8438-1e28e594bd1d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1144,27 +1144,6 @@
         }
       },
       "indexes": {
-        "otp_email_type_unique": {
-          "name": "otp_email_type_unique",
-          "columns": [
-            {
-              "expression": "email",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "type",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "verification_tokens_user_type_created_idx": {
           "name": "verification_tokens_user_type_created_idx",
           "columns": [

@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import bcrypt from 'bcryptjs';
+import type { Request } from 'express';
 import jwt, { type JwtPayload } from 'jsonwebtoken';
 
 import env from '@/src/utils/env';
@@ -60,4 +61,11 @@ export const verifyJWTToken = (token: string) => {
       success: false
     };
   }
+};
+
+export const getTokenFromAuthorizationHeader = (req: Request) => {
+  const authorization = req.headers?.authorization?.trim();
+  const parsedToken = authorization?.match(/^Bearer\s+(\S+)$/i)?.[1] ?? '';
+
+  return parsedToken;
 };

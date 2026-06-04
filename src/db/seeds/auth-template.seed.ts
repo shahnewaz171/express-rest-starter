@@ -8,18 +8,28 @@ export default async function seedAuthTemplate(db: DB) {
     .values([
       {
         event: 'send_user_verification_token',
-        body: '<h1>Welcome, {{username}}!</h1><p>Thank you for registering with us. Please verify your email with this OTP: <strong>{{token}}</strong>.</p><p>Best regards,<br/>The Team</p>',
-        subject: 'Welcome to Our Service, {{username}}!'
+        body: '<p>Welcome, {{username}}! Verify your email with this OTP: <strong>{{token}}</strong>.</p>',
+        subject: 'Verify Your Email'
       },
       {
         event: 'send_forgot_password_token',
-        body: '<h1>Hello, {{username}}!</h1><p>We are feeling sorry to know that you forgot your password. Please verify your email with this OTP: <strong>{{token}}</strong> to reset the password</p><p>If you did not request this, please ignore this email.</p><p>Best regards,<br/>The Team</p>',
+        body: '<p>Hi {{username}}, use this OTP to reset your password: <strong>{{token}}</strong>. If you did not request this, please ignore this email.</p>',
         subject: 'Password Reset Request'
       },
       {
         event: 'send_change_email_token',
-        body: '<h1>Hello, {{username}}!</h1><p>You requested to change your email address. Please confirm your new email with this OTP: <strong>{{token}}</strong>.</p><p>If you did not request this change, please ignore this email or contact support.</p><p>Best regards,<br/>The Team</p>',
+        body: '<p>Hi {{username}}, confirm your new email with this OTP: <strong>{{token}}</strong>. If you did not request this, please ignore this email.</p>',
         subject: 'Confirm Your Email Change'
+      },
+      {
+        event: 'send_password_changed',
+        body: '<p>Hi {{username}}, your password was just changed. If this was not you, please contact support immediately.</p>',
+        subject: 'Your Password Was Changed'
+      },
+      {
+        event: 'send_email_changed',
+        body: '<p>Hi {{username}}, your account email was updated to {{email}}. If this was not you, please contact support immediately.</p>',
+        subject: 'Your Email Was Changed'
       }
     ])
     .onConflictDoNothing();

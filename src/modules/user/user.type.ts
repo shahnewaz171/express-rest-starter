@@ -17,11 +17,11 @@ export interface LoginUserInput {
 }
 
 export interface UserQueryParams {
-  email?: string;
-  search_keyword?: string;
-  status?: string;
-  exclude_entity_ids?: string[];
-  include_entity_ids?: string[];
+  email?: string | undefined;
+  search_keyword?: string | undefined;
+  status?: string | undefined;
+  exclude_entity_ids?: string[] | undefined;
+  include_entity_ids?: string[] | undefined;
 }
 
 export interface GetUsersParams {
@@ -46,8 +46,8 @@ export interface AuthRequest extends Request {
     | {
         id: string;
         email: string;
-        first_name: string;
-        last_name: string;
+        first_name: string | null;
+        last_name: string | null;
         status: string;
         image: string | null;
         created_at: Date;

@@ -2,10 +2,11 @@ import type { NextFunction, Request, Response } from 'express';
 
 import { CustomError } from '@/src/utils/error';
 
-import * as commonHelper from '@/src/modules/common/common.helper';
+import * as commonService from '@/src/modules/common/common.service';
 import * as userHelper from '@/src/modules/user/user.helper';
 import * as userService from '@/src/modules/user/user.service';
 import type { AuthRequest } from '@/src/modules/user/user.type';
+import { getUsersQuerySchema } from '@/src/modules/user/user.validation';
 
 import { useTransaction } from '@/src/db';
 
@@ -73,8 +74,13 @@ export const userController = {
 
   logoutUser: async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const access_token = commonService.getTokenFromAuthorizationHeader(req);
+      if (!access_token) {
+        throw new CustomError(401, 'MISSING_TOKEN');
+      }
+
       const data = await useTransaction(async (tx) =>
-        userService.logoutAUser({ access_token: req.headers?.authorization || '' }, tx)
+        userService.logoutAUser({ access_token }, tx)
       );
       res.status(200).json({ data, message: 'SUCCESS' });
     } catch (err) {
@@ -219,10 +225,12 @@ export const userController = {
 
   getUsers: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const queryParams = req.query as Record<string, string | string[] | undefined>;
-      const { limit, offset } = commonHelper.getOptionsFromQuery(
-        req.query as Record<string, string | undefined>
-      );
+      const parsed = getUsersQuerySchema.safeParse(req.query);
+      if (!parsed.success) {
+        throw new CustomError(400, parsed.error.issues.map((i) => i.message).join(', '));
+      }
+
+      const { limit, offset, ...queryParams } = parsed.data;
       const data = await userHelper.getUsersForQuery(queryParams, { limit, offset });
       res.status(200).json({ data, message: 'SUCCESS' });
     } catch (err) {

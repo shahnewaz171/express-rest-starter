@@ -1,4 +1,4 @@
-import { and, type SQL } from 'drizzle-orm';
+import { type SQL, sql } from 'drizzle-orm';
 
 import { verificationToken } from '@/src/modules/verification-token/verification-token.schema';
 
@@ -6,14 +6,12 @@ import type { DB } from '@/src/db';
 import { db } from '@/src/db';
 
 export const countVerificationTokens = async (where?: SQL, tx: DB = db) => {
-  const conditions = where ? [where] : [];
-
   const result = await tx
-    .select({ count: verificationToken.id })
+    .select({ count: sql<number>`count(*)` })
     .from(verificationToken)
-    .where(and(...conditions));
+    .where(where);
 
-  return result.length;
+  return Number(result[0]?.count ?? 0);
 };
 
 export const getAVerificationToken = async (options: {

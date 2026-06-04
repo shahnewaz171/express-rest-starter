@@ -6,6 +6,6 @@ export const revokeAnAuthTokenSchema = z.object({
 });
 
 export const refreshTokenSchema = z.object({
-  access_token: z.string().min(1),
+  access_token: z.string().min(1).optional(),
   refresh_token: z.string().min(1)
 });
