@@ -1,9 +1,14 @@
+import type { ZodCustomError } from '@/src/modules/common/common.type';
+
 class CustomError extends Error {
-  constructor(
-    public statusCode: number,
-    message: string
-  ) {
+  statusCode: number;
+  errors?: unknown;
+
+  constructor(statusCode: number, message: string, errors?: unknown) {
     super(message);
+
+    this.statusCode = statusCode;
+    this.errors = errors as ZodCustomError;
 
     this.name = 'CustomError';
 

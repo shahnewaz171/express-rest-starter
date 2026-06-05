@@ -1,23 +1,29 @@
 import type { NextFunction, Request, Response } from 'express';
+import map from 'lodash/map';
 
-interface AppError {
-  statusCode?: number;
-  message?: string;
-}
+import type { ApiErrorResponse } from '@/src/modules/common/common.type';
 
-const formatErrorMessage = (str?: string) => {
-  const message = str?.replaceAll?.(' ', '_');
-  return message?.toUpperCase?.();
+const formatErrorMessage = (err: ApiErrorResponse) => {
+  const message = err?.message?.replaceAll?.(' ', '_');
+
+  const errors = map(err?.errors, (issue) => ({
+    field: issue.path?.join('.'),
+    code: issue.code?.toUpperCase(),
+    message: issue.message
+  }));
+
+  return {
+    message: message?.toUpperCase?.() || 'SERVER_ERROR',
+    ...(errors.length > 0 && { errors })
+  };
 };
 
-const errorHandler = (err: AppError, _req: Request, res: Response, _next: NextFunction) => {
+const errorHandler = (err: ApiErrorResponse, _req: Request, res: Response, _next: NextFunction) => {
   if (res.headersSent) {
     return;
   }
 
-  return res.status(err?.statusCode || 500).json({
-    message: formatErrorMessage(err?.message || 'SERVER_ERROR')
-  });
+  return res.status(err?.statusCode || 500).json(formatErrorMessage(err));
 };
 
 export default errorHandler;

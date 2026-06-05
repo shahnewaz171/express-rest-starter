@@ -37,3 +37,16 @@ export interface PaginatedResponse<T> {
   data: T[];
   meta_data: PaginationMeta;
 }
+
+export interface ZodCustomError {
+  message: string;
+  code: string;
+  path: string[];
+}
+
+export interface ApiErrorResponse {
+  statusCode?: number;
+  message: string;
+  errors?: ZodCustomError[];
+  traceId?: string; // useful for debugging in production
+}

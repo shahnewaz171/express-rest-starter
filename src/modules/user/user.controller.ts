@@ -227,7 +227,7 @@ export const userController = {
     try {
       const parsed = getUsersQuerySchema.safeParse(req.query);
       if (!parsed.success) {
-        throw new CustomError(400, parsed.error.issues.map((i) => i.message).join(', '));
+        throw new CustomError(400, 'INVALID_INPUT', parsed.error.issues);
       }
 
       const { limit, offset, ...queryParams } = parsed.data;

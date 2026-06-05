@@ -4,6 +4,8 @@ import { Pool } from 'pg';
 import env from '@/src/utils/env';
 import { CustomError } from '@/src/utils/error';
 
+import type { ApiErrorResponse } from '@/src/modules/common/common.type';
+
 import * as schema from '@/src/db/schema';
 
 import { isProduction } from '@/src/utils';
@@ -36,13 +38,18 @@ export type DB = typeof db | Transaction;
 export const useTransaction = async <T>(callback: (tx: Transaction) => Promise<T>): Promise<T> => {
   try {
     return await db.transaction(async (tx) => {
-      const result = await callback(tx).catch((err) => {
-        throw new CustomError(err?.statusCode || 500, err?.message);
+      const result = await callback(tx).catch((err: ApiErrorResponse) => {
+        throw new CustomError(err?.statusCode || 500, err?.message, err?.errors);
       });
       return result;
     });
-  } catch (err: unknown) {
-    const error = err as { statusCode?: number; message?: string };
-    throw new CustomError(error?.statusCode || 500, error?.message || 'UNKNOWN_ERROR');
+  } catch (err) {
+    const error = err as ApiErrorResponse;
+
+    throw new CustomError(
+      error?.statusCode || 500,
+      error?.message || 'UNKNOWN_ERROR',
+      error?.errors
+    );
   }
 };

@@ -72,7 +72,7 @@ export const deleteAUser = async (id: string, tx: DB) => {
 export const registerUser = async (params: RegisterUserInput, tx: DB) => {
   const parsed = registerSchema.safeParse(params);
   if (!parsed.success) {
-    throw new CustomError(400, parsed.error.issues.map((i) => i.message).join(', '));
+    throw new CustomError(400, 'INVALID_INPUT', parsed.error.issues);
   }
 
   const { email, first_name, last_name, password } = parsed.data;
@@ -135,7 +135,7 @@ export const registerUser = async (params: RegisterUserInput, tx: DB) => {
 export const loginUser = async (params: LoginUserInput, tx: DB) => {
   const parsed = loginSchema.safeParse(params);
   if (!parsed.success) {
-    throw new CustomError(400, parsed.error.issues.map((i) => i.message).join(', '));
+    throw new CustomError(400, 'INVALID_INPUT', parsed.error.issues);
   }
 
   const { email, password } = parsed.data;
@@ -199,11 +199,7 @@ export const verifyUserEmail = async (params: { email: string; token: string }, 
   const emailParsed = verifyUserEmailSchema.safeParse(params);
 
   if (!emailParsed.success) {
-    const issue = emailParsed.error.issues?.[0];
-    throw new CustomError(
-      400,
-      issue ? `MISSING_${issue.path.join('_').toUpperCase()}` : 'MISSING_FIELDS'
-    );
+    throw new CustomError(400, 'INVALID_INPUT', emailParsed.error.issues);
   }
 
   const existingToken = await verificationTokenService.validateVerificationTokenForUser(
@@ -235,7 +231,7 @@ export const verifyUserEmail = async (params: { email: string; token: string }, 
 export const resendUserVerificationEmail = async (params: { email: string }, tx: DB) => {
   const emailParsed = emailSchema.safeParse(params.email);
   if (!emailParsed.success) {
-    throw new CustomError(400, 'INVALID_EMAIL');
+    throw new CustomError(400, 'INVALID_INPUT', emailParsed.error.issues);
   }
 
   const existingUser = await tx.query.user.findFirst({
@@ -292,10 +288,7 @@ export const resendUserVerificationEmail = async (params: { email: string }, tx:
 export const changeEmailByUser = async (params: { user_id: string; new_email: string }, tx: DB) => {
   const emailParsed = changeEmailSchema.safeParse(params);
   if (!emailParsed.success) {
-    throw new CustomError(
-      400,
-      emailParsed.error?.issues?.[0]?.message ?? 'REQUIRED_FIELDS_ARE_MISSING'
-    );
+    throw new CustomError(400, 'VALIDATION_ERROR', emailParsed.error.issues);
   }
 
   const { new_email, user_id } = params;
@@ -359,7 +352,7 @@ export const changeEmailByUser = async (params: { user_id: string; new_email: st
 export const cancelChangeEmailByUser = async (params: { email: string }, tx: DB) => {
   const emailParsed = emailSchema.safeParse(params.email);
   if (!emailParsed.success) {
-    throw new CustomError(400, 'INVALID_EMAIL');
+    throw new CustomError(400, 'INVALID_INPUT', emailParsed.error.issues);
   }
 
   const existingUser = await tx.query.user.findFirst({
@@ -403,7 +396,7 @@ export const verifyChangeEmailByUser = async (
 ) => {
   const parsed = verifyChangeEmailSchema.safeParse(params);
   if (!parsed.success) {
-    throw new CustomError(400, parsed.error.issues?.map((i) => i.message).join(', '));
+    throw new CustomError(400, 'VALIDATION_ERROR', parsed.error.issues);
   }
 
   const existingUser = await tx.query.user.findFirst({
@@ -460,7 +453,7 @@ export const setUserEmailByAdmin = async (
 ) => {
   const emailParsed = emailSchema.safeParse(params.new_email);
   if (!emailParsed.success) {
-    throw new CustomError(400, 'INVALID_EMAIL');
+    throw new CustomError(400, 'INVALID_INPUT', emailParsed.error.issues);
   }
 
   const existingUser = await tx.query.user.findFirst({
@@ -516,7 +509,7 @@ export const changePasswordByUser = async (
     user_id
   });
   if (!parsed.success) {
-    throw new CustomError(400, parsed.error.issues?.map((i) => i.message).join(', '));
+    throw new CustomError(400, 'INVALID_INPUT', parsed.error.issues);
   }
 
   if (new_password === old_password) {
@@ -591,7 +584,7 @@ export const changePasswordByAdmin = async (
 ) => {
   const parsed = setUserPasswordByAdminSchema.safeParse(params);
   if (!parsed.success) {
-    throw new CustomError(400, parsed.error.issues?.map((i) => i.message).join(', '));
+    throw new CustomError(400, 'INVALID_INPUT', parsed.error.issues);
   }
 
   const existingUser = await tx.query.user.findFirst({
@@ -635,7 +628,7 @@ export const changePasswordByAdmin = async (
 export const forgotPassword = async (params: { email: string }, tx: DB) => {
   const parsed = forgotPasswordSchema.safeParse(params);
   if (!parsed.success) {
-    throw new CustomError(400, parsed.error.issues?.map((i) => i.message).join(', '));
+    throw new CustomError(400, 'INVALID_INPUT', parsed.error.issues);
   }
 
   const existingUser = await tx.query.user.findFirst({
@@ -683,7 +676,7 @@ export const forgotPassword = async (params: { email: string }, tx: DB) => {
 export const retryForgotPassword = async (params: { email: string }, tx: DB) => {
   const parsed = forgotPasswordSchema.safeParse(params);
   if (!parsed.success) {
-    throw new CustomError(400, parsed.error.issues.map((i) => i.message).join(', '));
+    throw new CustomError(400, 'INVALID_INPUT', parsed.error.issues);
   }
 
   const existingUser = await tx.query.user.findFirst({
@@ -734,7 +727,7 @@ export const verifyForgotPasswordCode = async (
 ) => {
   const parsed = verifyUserEmailSchema.safeParse(params);
   if (!parsed.success) {
-    throw new CustomError(400, parsed.error.issues?.map((i) => i.message).join(', '));
+    throw new CustomError(400, 'INVALID_INPUT', parsed.error.issues);
   }
 
   const { email, token } = parsed.data;
@@ -766,7 +759,7 @@ export const verifyForgotPassword = async (
 ) => {
   const parsed = verifyForgotPasswordSchema.safeParse(params);
   if (!parsed.success) {
-    throw new CustomError(400, parsed.error.issues.map((i) => i.message).join(', '));
+    throw new CustomError(400, 'INVALID_INPUT', parsed.error.issues);
   }
 
   const { email, password, token } = params || {};
@@ -841,7 +834,7 @@ export const verifyUserPassword = async (params: { user_id: string; password: st
 
   const parsed = verifyUserPasswordSchema.safeParse({ password, user_id });
   if (!parsed.success) {
-    throw new CustomError(400, parsed.error.issues.map((i) => i.message).join(', '));
+    throw new CustomError(400, 'INVALID_INPUT', parsed.error.issues);
   }
 
   const existingUser = await tx.query.user.findFirst({
@@ -871,7 +864,7 @@ export const refreshTokensForUser = async (
 ) => {
   const parsed = refreshTokenSchema.safeParse(params);
   if (!parsed.success) {
-    throw new CustomError(400, parsed.error.issues.map((i) => i.message).join(', '));
+    throw new CustomError(400, 'VALIDATION_ERROR', parsed.error.issues);
   }
 
   const refreshVerification = commonService.verifyJWTToken(parsed.data.refresh_token);
