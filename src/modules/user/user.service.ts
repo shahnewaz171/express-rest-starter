@@ -229,9 +229,11 @@ export const verifyUserEmail = async (params: { email: string; token: string }, 
 };
 
 export const resendUserVerificationEmail = async (params: { email: string }, tx: DB) => {
-  const emailParsed = emailSchema.safeParse(params.email);
+  const { email } = params || {};
+
+  const emailParsed = emailSchema.safeParse(email);
   if (!emailParsed.success) {
-    throw new CustomError(400, 'INVALID_INPUT', emailParsed.error.issues);
+    throw new CustomError(400, 'EMAIL_REQUIRED');
   }
 
   const existingUser = await tx.query.user.findFirst({

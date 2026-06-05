@@ -76,12 +76,13 @@ export const verifyAnAuthTokenForUser = async (params: VerifyTokenInput, tx?: DB
       ? and(eq(authToken.access_token, token), eq(authToken.user_id, user_id))
       : and(eq(authToken.refresh_token, token), eq(authToken.user_id, user_id));
 
-  const authTokenData = where
-    ? await authTokenHelper.getAnAuthToken({ where, ...(tx && { tx }) })
-    : null;
+  const authTokenData = await authTokenHelper.getAnAuthToken({
+    ...(where && { where }),
+    ...(tx && { tx })
+  });
 
   if (!authTokenData?.id) {
-    return { message: 'INVALID_TOKEN', success: false };
+    return { message: 'AUTH_TOKEN_NOT_FOUND', success: false };
   }
 
   return verification;
@@ -98,15 +99,13 @@ export const refreshAuthTokensForUser = async (params: RefreshTokenInput, tx?: D
 
   const where = and(eq(authToken.refresh_token, refresh_token), eq(authToken.user_id, user_id));
 
-  const existingToken = where
-    ? await authTokenHelper.getAnAuthToken({
-        where,
-        with: { user: true },
-        ...(tx && { tx })
-      })
-    : null;
+  const existingToken = await authTokenHelper.getAnAuthToken({
+    ...(where && { where }),
+    with: { user: true },
+    ...(tx && { tx })
+  });
 
-  if (!existingToken) {
+  if (!existingToken?.id) {
     return { message: 'REFRESH_TOKEN_NOT_FOUND', success: false };
   }
 
@@ -145,9 +144,18 @@ export const revokeAnAuthTokenForUser = async (params: RevokeTokenInput, tx?: DB
       ? eq(authToken.access_token, token)
       : eq(authToken.refresh_token, token);
 
+  const existingToken = await authTokenHelper.getAnAuthToken({
+    ...(where && { where }),
+    ...(tx && { tx })
+  });
+
+  if (!existingToken?.id) {
+    return { message: 'AUTH_TOKEN_NOT_FOUND', success: false };
+  }
+
   const deleted = await deleteAnAuthToken(where, tx);
 
-  if (!deleted) {
+  if (!deleted?.id) {
     return { message: 'INVALID_TOKEN', success: false };
   }
 

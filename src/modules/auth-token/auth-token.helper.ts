@@ -23,7 +23,7 @@ export const getAnAuthToken = async (options: {
     with: withRelations
   });
 
-  return result ?? null;
+  return result;
 };
 
 export const getAuthTokens = async (options: {

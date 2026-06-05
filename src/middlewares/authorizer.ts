@@ -30,7 +30,7 @@ export const validateTokenAndGetAuthUser = async (token: string) => {
     where: and(eq(authToken.access_token, token), eq(authToken.user_id, jwtPayload.user_id)) as SQL
   });
   if (!storedToken?.id) {
-    throw new CustomError(401, 'INVALID_TOKEN');
+    throw new CustomError(401, 'AUTH_TOKEN_NOT_FOUND');
   }
 
   return await userHelper.getAuthUserWithRolesAndPermissions({
