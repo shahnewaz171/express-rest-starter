@@ -55,6 +55,13 @@ export const createARoleForMutation = async (
     throw new CustomError(400, parsed.error.issues[0]?.message ?? 'VALIDATION_ERROR');
   }
 
+  const existingRole = await tx.query.role.findFirst({
+    where: eq(role.name, parsed.data.name)
+  });
+  if (existingRole) {
+    throw new CustomError(409, 'ROLE_ALREADY_EXISTS');
+  }
+
   return await createARole(
     {
       name: parsed.data.name,
@@ -78,6 +85,13 @@ export const updateARoleForMutation = async (
 
   if (data.name === undefined) {
     throw new CustomError(400, 'NO_FIELDS_TO_UPDATE');
+  }
+
+  const current = await tx.query.role.findFirst({
+    where: eq(role.id, entity_id)
+  });
+  if (!current) {
+    throw new CustomError(404, 'ROLE_NOT_FOUND');
   }
 
   return await updateARole(entity_id, { name: data.name }, tx);

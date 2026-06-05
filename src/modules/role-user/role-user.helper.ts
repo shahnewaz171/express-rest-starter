@@ -1,4 +1,5 @@
 import { and, eq, inArray, not, sql } from 'drizzle-orm';
+import isArray from 'lodash/isArray';
 
 import { CustomError } from '@/src/utils/error';
 
@@ -46,23 +47,25 @@ export const getRoleUsers = async (
   return results;
 };
 
-export const prepareRoleUserQuery = (params: RoleUserQueryParams = {}) => {
+export const prepareRoleUserQuery = (params: RoleUserQueryParams) => {
+  const { role_id, user_id, exclude_entity_ids, include_entity_ids } = params || {};
+
   const conditions = [];
 
-  if (params.role_id) {
-    conditions.push(eq(roleUser.role_id, params.role_id));
+  if (role_id) {
+    conditions.push(eq(roleUser.role_id, role_id));
   }
 
-  if (params.user_id) {
-    conditions.push(eq(roleUser.user_id, params.user_id));
+  if (user_id) {
+    conditions.push(eq(roleUser.user_id, user_id));
   }
 
-  if (params.exclude_entity_ids && params.exclude_entity_ids.length > 0) {
-    conditions.push(not(inArray(roleUser.id, params.exclude_entity_ids)));
+  if (isArray(exclude_entity_ids) && exclude_entity_ids.length > 0) {
+    conditions.push(not(inArray(roleUser.id, exclude_entity_ids)));
   }
 
-  if (params.include_entity_ids && params.include_entity_ids.length > 0) {
-    conditions.push(inArray(roleUser.id, params.include_entity_ids));
+  if (isArray(include_entity_ids) && include_entity_ids.length > 0) {
+    conditions.push(inArray(roleUser.id, include_entity_ids));
   }
 
   return conditions;
