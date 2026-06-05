@@ -123,7 +123,7 @@ Each mutating endpoint runs inside `useTransaction` (`src/db/index.ts`). Email d
 (AWS SES via `notification.service.ts`) is **decoupled** from the transaction:
 
 - Inside the transaction, notifications are **registered** via
-  `runAfterTransactionCommit(() => notificationService.sendNotification(...))`.
+  `runAfterTransactionCommit(() => notificationService.sendEmailNotification(...))`.
 - The queued tasks run **only after the transaction commits successfully**.
 - If an email send fails, the error is **logged but not rethrown into the request**, so a
   committed change (e.g. a password update) is **not rolled back** by an email failure,

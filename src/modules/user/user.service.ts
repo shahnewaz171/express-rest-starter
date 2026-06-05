@@ -11,7 +11,7 @@ import { refreshTokenSchema } from '@/src/modules/auth-token/auth-token.validati
 import * as commonHelper from '@/src/modules/common/common.helper';
 import * as commonService from '@/src/modules/common/common.service';
 import { emailSchema } from '@/src/modules/common/common.validation';
-import * as notificationService from '@/src/modules/notification/notification.service';
+import * as notificationService from '@/src/modules/email/email.service';
 import * as roleUserService from '@/src/modules/role-user/role-user.service';
 import * as userHelper from '@/src/modules/user/user.helper';
 import { user } from '@/src/modules/user/user.schema';
@@ -438,7 +438,7 @@ export const verifyChangeEmailByUser = async (
     .where(eq(user.id, params.user_id))
     .returning();
 
-  await notificationService.sendNotification({
+  await notificationService.sendEmailNotification({
     event: 'send_email_changed',
     to_email: existingUser.new_email,
     variables: {
@@ -488,7 +488,7 @@ export const setUserEmailByAdmin = async (
     .where(eq(user.id, params.user_id))
     .returning();
 
-  await notificationService.sendNotification({
+  await notificationService.sendEmailNotification({
     event: 'send_email_changed',
     to_email: emailParsed.data,
     variables: {
@@ -569,7 +569,7 @@ export const changePasswordByUser = async (
 
   await authTokenService.revokeAuthTokensForUser({ user_id: params.user_id }, tx);
 
-  await notificationService.sendNotification({
+  await notificationService.sendEmailNotification({
     event: 'send_password_changed',
     to_email: existingUser.email,
     variables: {
@@ -616,7 +616,7 @@ export const changePasswordByAdmin = async (
 
   await authTokenService.revokeAuthTokensForUser({ user_id: params.user_id }, tx);
 
-  await notificationService.sendNotification({
+  await notificationService.sendEmailNotification({
     event: 'send_password_changed',
     to_email: existingUser.email,
     variables: {
@@ -820,7 +820,7 @@ export const verifyForgotPassword = async (
 
   await authTokenService.revokeAuthTokensForUser({ user_id: existingUser.id }, tx);
 
-  await notificationService.sendNotification({
+  await notificationService.sendEmailNotification({
     event: 'send_password_changed',
     to_email: existingUser.email,
     variables: {

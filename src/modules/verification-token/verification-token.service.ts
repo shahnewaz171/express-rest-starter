@@ -5,7 +5,7 @@ import env from '@/src/utils/env';
 import { CustomError } from '@/src/utils/error';
 
 import * as commonHelper from '@/src/modules/common/common.helper';
-import * as notificationService from '@/src/modules/notification/notification.service';
+import * as notificationService from '@/src/modules/email/email.service';
 import * as userHelper from '@/src/modules/user/user.helper';
 import type { NewVerificationToken } from '@/src/modules/verification-token/verification-token.schema';
 import { verificationToken } from '@/src/modules/verification-token/verification-token.schema';
@@ -79,7 +79,7 @@ export const createAVerificationTokenForUser = async (
     params.event ??
     (type === 'forgot_password' ? 'send_forgot_password_token' : 'send_user_verification_token');
 
-  await notificationService.sendNotification({
+  await notificationService.sendEmailNotification({
     event,
     to_email: email,
     variables: {

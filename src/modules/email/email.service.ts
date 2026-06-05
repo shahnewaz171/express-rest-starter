@@ -7,10 +7,7 @@ import env from '@/src/utils/env';
 
 import * as authTemplateHelper from '@/src/modules/auth-template/auth-template.helper';
 import { authTemplate } from '@/src/modules/auth-template/auth-template.schema';
-import type {
-  SendEmailParams,
-  SendNotificationParams
-} from '@/src/modules/notification/notification.type';
+import type { SendEmailParams, SendNotificationParams } from '@/src/modules/email/email.type';
 
 Handlebars.registerHelper('current_year', () => new Date().getFullYear());
 
@@ -46,7 +43,7 @@ export const sendEmailBySES = async (params: SendEmailParams) => {
   }
 };
 
-export const sendNotification = async (params: SendNotificationParams) => {
+export const sendEmailNotification = async (params: SendNotificationParams) => {
   const { event, to_email } = params;
 
   if (!(event && to_email)) {
