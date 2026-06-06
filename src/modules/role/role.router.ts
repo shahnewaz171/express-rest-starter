@@ -24,7 +24,9 @@ const roleRouter: ReturnType<typeof Router> = Router();
  *             required: [name]
  *     responses:
  *       201: { description: SUCCESS }
+ *       400: { description: VALIDATION_ERROR }
  *       401: { description: UNAUTHORIZED }
+ *       409: { description: ROLE_ALREADY_EXISTS }
  */
 roleRouter.post('/', authorizer(['admin', 'developer']), roleController.createARole);
 
@@ -47,9 +49,10 @@ roleRouter.post('/', authorizer(['admin', 'developer']), roleController.createAR
  *           schema:
  *             type: object
  *             properties:
- *               name: { type: string }
+ *               name: { type: string, enum: [admin, developer, moderator, user] }
  *     responses:
  *       200: { description: SUCCESS }
+ *       400: { description: VALIDATION_ERROR }
  *       404: { description: ROLE_NOT_FOUND }
  */
 roleRouter.put('/:entity_id', authorizer(['admin', 'developer']), roleController.updateARole);
@@ -87,8 +90,16 @@ roleRouter.delete('/:entity_id', authorizer(['admin', 'developer']), roleControl
  *         name: offset
  *         schema: { type: integer, default: 0 }
  *       - in: query
- *         name: order
- *         schema: { type: string }
+ *         name: names
+ *         schema:
+ *           type: array
+ *           items: { type: string, enum: [admin, developer, moderator, user] }
+ *       - in: query
+ *         name: exclude_entity_ids
+ *         schema: { type: array, items: { type: string, format: uuid } }
+ *       - in: query
+ *         name: include_entity_ids
+ *         schema: { type: array, items: { type: string, format: uuid } }
  *     responses:
  *       200: { description: SUCCESS }
  */
@@ -108,7 +119,7 @@ roleRouter.get('/', authorizer(['admin', 'developer']), roleController.getRoles)
  *         schema: { type: string, format: uuid }
  *     responses:
  *       200: { description: SUCCESS }
- *       404: { description: ROLE_DOES_NOT_EXIST }
+ *       404: { description: ROLE_NOT_FOUND }
  */
 roleRouter.get('/:entity_id', authorizer(['admin', 'developer']), roleController.getARole);
 

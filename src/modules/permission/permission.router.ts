@@ -25,7 +25,9 @@ const permissionRouter: ReturnType<typeof Router> = Router();
  *             required: [action, module]
  *     responses:
  *       201: { description: SUCCESS }
+ *       400: { description: VALIDATION_ERROR }
  *       401: { description: UNAUTHORIZED }
+ *       409: { description: PERMISSION_ALREADY_EXISTS }
  */
 permissionRouter.post(
   '/',
@@ -56,6 +58,7 @@ permissionRouter.post(
  *               module: { type: string, enum: [permission, role, role_permission, role_user, user] }
  *     responses:
  *       200: { description: SUCCESS }
+ *       400: { description: VALIDATION_ERROR }
  *       404: { description: PERMISSION_NOT_FOUND }
  */
 permissionRouter.put(
@@ -101,8 +104,17 @@ permissionRouter.delete(
  *         name: offset
  *         schema: { type: integer, default: 0 }
  *       - in: query
- *         name: order
- *         schema: { type: string }
+ *         name: action
+ *         schema: { type: string, enum: [create, read, update, delete] }
+ *       - in: query
+ *         name: module
+ *         schema: { type: string, enum: [permission, role, role_permission, role_user, user] }
+ *       - in: query
+ *         name: exclude_entity_ids
+ *         schema: { type: array, items: { type: string, format: uuid } }
+ *       - in: query
+ *         name: include_entity_ids
+ *         schema: { type: array, items: { type: string, format: uuid } }
  *     responses:
  *       200: { description: SUCCESS }
  */
