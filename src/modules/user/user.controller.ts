@@ -225,7 +225,7 @@ export const userController = {
 
   getUsers: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const parsed = getUsersQuerySchema.safeParse(req.query);
+      const parsed = getUsersQuerySchema.safeParse(req.query || {});
       if (!parsed.success) {
         throw new CustomError(400, 'INVALID_INPUT', parsed.error.issues);
       }
