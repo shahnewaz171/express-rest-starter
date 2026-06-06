@@ -2,18 +2,40 @@ import type { NextFunction, Request, Response } from 'express';
 
 import { CustomError } from '@/src/utils/error';
 
+import {
+  refreshTokenSchema,
+  revokeAnAuthTokenSchema
+} from '@/src/modules/auth-token/auth-token.validation';
 import * as commonService from '@/src/modules/common/common.service';
+import { emailSchema } from '@/src/modules/common/common.validation';
 import * as userHelper from '@/src/modules/user/user.helper';
 import * as userService from '@/src/modules/user/user.service';
 import type { AuthRequest } from '@/src/modules/user/user.type';
-import { getUsersQuerySchema } from '@/src/modules/user/user.validation';
+import {
+  changeEmailSchema,
+  changePasswordSchema,
+  forgotPasswordSchema,
+  getUsersQuerySchema,
+  loginSchema,
+  registerSchema,
+  setUserPasswordByAdminSchema,
+  verifyChangeEmailSchema,
+  verifyForgotPasswordSchema,
+  verifyUserEmailSchema,
+  verifyUserPasswordSchema
+} from '@/src/modules/user/user.validation';
 
 import { useTransaction } from '@/src/db';
 
 export const userController = {
   registerUser: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const data = await useTransaction(async (tx) => userService.registerUser(req.body, tx));
+      const parsed = registerSchema.safeParse(req.body || {});
+      if (!parsed.success) {
+        throw new CustomError(400, 'INVALID_INPUT', parsed.error.issues);
+      }
+
+      const data = await useTransaction(async (tx) => userService.registerUser(parsed.data, tx));
       res.status(201).json({ data, message: 'SUCCESS' });
     } catch (err) {
       next(err);
@@ -22,7 +44,12 @@ export const userController = {
 
   verifyUserEmail: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const data = await useTransaction(async (tx) => userService.verifyUserEmail(req.body, tx));
+      const parsed = verifyUserEmailSchema.safeParse(req.body || {});
+      if (!parsed.success) {
+        throw new CustomError(400, 'INVALID_INPUT', parsed.error.issues);
+      }
+
+      const data = await useTransaction(async (tx) => userService.verifyUserEmail(parsed.data, tx));
       res.status(200).json({ data, message: 'SUCCESS' });
     } catch (err) {
       next(err);
@@ -31,8 +58,13 @@ export const userController = {
 
   resendVerificationEmail: async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const emailParsed = emailSchema.safeParse(req.body?.email);
+      if (!emailParsed.success) {
+        throw new CustomError(400, 'EMAIL_REQUIRED');
+      }
+
       const data = await useTransaction(async (tx) =>
-        userService.resendUserVerificationEmail(req.body, tx)
+        userService.resendUserVerificationEmail({ email: emailParsed.data }, tx)
       );
       res.status(200).json({ data, message: 'SUCCESS' });
     } catch (err) {
@@ -42,7 +74,12 @@ export const userController = {
 
   loginUser: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const data = await useTransaction(async (tx) => userService.loginUser(req.body, tx));
+      const parsed = loginSchema.safeParse(req.body || {});
+      if (!parsed.success) {
+        throw new CustomError(400, 'INVALID_INPUT', parsed.error.issues);
+      }
+
+      const data = await useTransaction(async (tx) => userService.loginUser(parsed.data, tx));
       res.status(200).json({ data, message: 'SUCCESS' });
     } catch (err) {
       next(err);
@@ -51,8 +88,17 @@ export const userController = {
 
   getRefreshedTokens: async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const parsed = refreshTokenSchema.safeParse(req.body || {});
+      if (!parsed.success) {
+        throw new CustomError(400, 'VALIDATION_ERROR', parsed.error.issues);
+      }
+
+      const { refresh_token, access_token } = parsed.data;
+      const refreshParams =
+        access_token === undefined ? { refresh_token } : { refresh_token, access_token };
+
       const data = await useTransaction(async (tx) =>
-        userService.refreshTokensForUser(req.body, tx)
+        userService.refreshTokensForUser(refreshParams, tx)
       );
       res.status(200).json({ data, message: 'SUCCESS' });
     } catch (err) {
@@ -79,8 +125,16 @@ export const userController = {
         throw new CustomError(401, 'MISSING_TOKEN');
       }
 
+      const parsed = revokeAnAuthTokenSchema.safeParse({
+        token: access_token,
+        type: 'access_token'
+      });
+      if (!parsed.success) {
+        throw new CustomError(400, 'TOKEN_IS_INVALID');
+      }
+
       const data = await useTransaction(async (tx) =>
-        userService.logoutAUser({ access_token }, tx)
+        userService.logoutAUser({ access_token: parsed.data.token }, tx)
       );
       res.status(200).json({ data, message: 'SUCCESS' });
     } catch (err) {
@@ -90,11 +144,16 @@ export const userController = {
 
   changeEmail: async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
+      const parsed = changeEmailSchema.safeParse({
+        new_email: req.body?.email,
+        user_id: req.user?.user_id || ''
+      });
+      if (!parsed.success) {
+        throw new CustomError(400, 'VALIDATION_ERROR', parsed.error.issues);
+      }
+
       const data = await useTransaction(async (tx) =>
-        userService.changeEmailByUser(
-          { new_email: req.body?.email, user_id: req.user?.user_id || '' },
-          tx
-        )
+        userService.changeEmailByUser(parsed.data, tx)
       );
       res.status(200).json({ data, message: 'SUCCESS' });
     } catch (err) {
@@ -104,8 +163,13 @@ export const userController = {
 
   cancelChangeEmail: async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const emailParsed = emailSchema.safeParse(req.body?.email || '');
+      if (!emailParsed.success) {
+        throw new CustomError(400, 'INVALID_INPUT', emailParsed.error.issues);
+      }
+
       const data = await useTransaction(async (tx) =>
-        userService.cancelChangeEmailByUser({ email: req.body?.email || '' }, tx)
+        userService.cancelChangeEmailByUser({ email: emailParsed.data }, tx)
       );
       res.status(200).json({ data, message: 'SUCCESS' });
     } catch (err) {
@@ -115,11 +179,16 @@ export const userController = {
 
   verifyNewEmail: async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
+      const parsed = verifyChangeEmailSchema.safeParse({
+        token: req.body?.token,
+        user_id: req.user?.user_id || ''
+      });
+      if (!parsed.success) {
+        throw new CustomError(400, 'VALIDATION_ERROR', parsed.error.issues);
+      }
+
       const data = await useTransaction(async (tx) =>
-        userService.verifyChangeEmailByUser(
-          { token: req.body?.token, user_id: req.user?.user_id || '' },
-          tx
-        )
+        userService.verifyChangeEmailByUser(parsed.data, tx)
       );
       res.status(200).json({ data, message: 'SUCCESS' });
     } catch (err) {
@@ -129,8 +198,16 @@ export const userController = {
 
   setUserEmailByAdmin: async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const emailParsed = emailSchema.safeParse(req.body?.new_email);
+      if (!emailParsed.success) {
+        throw new CustomError(400, 'INVALID_INPUT', emailParsed.error.issues);
+      }
+
       const data = await useTransaction(async (tx) =>
-        userService.setUserEmailByAdmin(req.body, tx)
+        userService.setUserEmailByAdmin(
+          { new_email: emailParsed.data, user_id: req.body?.user_id },
+          tx
+        )
       );
       res.status(200).json({ data, message: 'SUCCESS' });
     } catch (err) {
@@ -140,15 +217,17 @@ export const userController = {
 
   changePassword: async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
+      const parsed = changePasswordSchema.safeParse({
+        new_password: req.body?.new_password,
+        old_password: req.body?.old_password,
+        user_id: req.user?.user_id || ''
+      });
+      if (!parsed.success) {
+        throw new CustomError(400, 'INVALID_INPUT', parsed.error.issues);
+      }
+
       const data = await useTransaction(async (tx) =>
-        userService.changePasswordByUser(
-          {
-            new_password: req.body?.new_password,
-            old_password: req.body?.old_password,
-            user_id: req.user?.user_id || ''
-          },
-          tx
-        )
+        userService.changePasswordByUser(parsed.data, tx)
       );
       res.status(200).json({ data, message: 'SUCCESS' });
     } catch (err) {
@@ -158,8 +237,13 @@ export const userController = {
 
   setUserPasswordByAdmin: async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const parsed = setUserPasswordByAdminSchema.safeParse(req.body || {});
+      if (!parsed.success) {
+        throw new CustomError(400, 'INVALID_INPUT', parsed.error.issues);
+      }
+
       const data = await useTransaction(async (tx) =>
-        userService.changePasswordByAdmin(req.body, tx)
+        userService.changePasswordByAdmin(parsed.data, tx)
       );
       res.status(200).json({ data, message: 'SUCCESS' });
     } catch (err) {
@@ -169,7 +253,12 @@ export const userController = {
 
   tryForgotPassword: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const data = await useTransaction(async (tx) => userService.forgotPassword(req.body, tx));
+      const parsed = forgotPasswordSchema.safeParse(req.body || {});
+      if (!parsed.success) {
+        throw new CustomError(400, 'INVALID_INPUT', parsed.error.issues);
+      }
+
+      const data = await useTransaction(async (tx) => userService.forgotPassword(parsed.data, tx));
       res.status(200).json({ data, message: 'SUCCESS' });
     } catch (err) {
       next(err);
@@ -178,8 +267,13 @@ export const userController = {
 
   retryForgotPassword: async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const parsed = forgotPasswordSchema.safeParse(req.body || {});
+      if (!parsed.success) {
+        throw new CustomError(400, 'INVALID_INPUT', parsed.error.issues);
+      }
+
       const data = await useTransaction(async (tx) =>
-        userService.retryForgotPassword(req.body, tx)
+        userService.retryForgotPassword(parsed.data, tx)
       );
       res.status(200).json({ data, message: 'SUCCESS' });
     } catch (err) {
@@ -189,8 +283,13 @@ export const userController = {
 
   verifyForgotPassword: async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const parsed = verifyForgotPasswordSchema.safeParse(req.body || {});
+      if (!parsed.success) {
+        throw new CustomError(400, 'INVALID_INPUT', parsed.error.issues);
+      }
+
       const data = await useTransaction(async (tx) =>
-        userService.verifyForgotPassword(req.body, tx)
+        userService.verifyForgotPassword(parsed.data, tx)
       );
       res.status(200).json({ data, message: 'SUCCESS' });
     } catch (err) {
@@ -200,8 +299,13 @@ export const userController = {
 
   verifyForgotPasswordCode: async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const parsed = verifyUserEmailSchema.safeParse(req.body || {});
+      if (!parsed.success) {
+        throw new CustomError(400, 'INVALID_INPUT', parsed.error.issues);
+      }
+
       const data = await useTransaction(async (tx) =>
-        userService.verifyForgotPasswordCode(req.body, tx)
+        userService.verifyForgotPasswordCode(parsed.data, tx)
       );
       res.status(200).json({ data, message: 'SUCCESS' });
     } catch (err) {
@@ -211,11 +315,16 @@ export const userController = {
 
   verifyUserPassword: async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
+      const parsed = verifyUserPasswordSchema.safeParse({
+        password: req.body?.password,
+        user_id: req.user?.user_id || ''
+      });
+      if (!parsed.success) {
+        throw new CustomError(400, 'INVALID_INPUT', parsed.error.issues);
+      }
+
       const data = await useTransaction(async (tx) =>
-        userService.verifyUserPassword(
-          { password: req.body?.password, user_id: req.user?.user_id || '' },
-          tx
-        )
+        userService.verifyUserPassword(parsed.data, tx)
       );
       res.status(200).json({ data, message: 'SUCCESS' });
     } catch (err) {

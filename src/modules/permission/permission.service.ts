@@ -1,35 +1,17 @@
 import { and, eq, not } from 'drizzle-orm';
-import { z } from 'zod';
+import type { z } from 'zod';
 
 import { CustomError } from '@/src/utils/error';
 
-import { uuidSchema } from '@/src/modules/common/common.validation';
 import type { NewPermission } from '@/src/modules/permission/permission.schema';
-import {
-  permission,
-  permissionActionsEnum,
-  permissionModulesEnum
-} from '@/src/modules/permission/permission.schema';
-import type { PermissionInput } from '@/src/modules/permission/permission.type';
+import { permission } from '@/src/modules/permission/permission.schema';
+import type {
+  createPermissionSchema,
+  PermissionInput,
+  updatePermissionSchema
+} from '@/src/modules/permission/permission.type';
 
 import type { DB } from '@/src/db';
-
-const createPermissionSchema = z.object({
-  action: z.enum(permissionActionsEnum.enumValues),
-  module: z.enum(permissionModulesEnum.enumValues)
-});
-
-const updatePermissionSchema = z.object({
-  entity_id: uuidSchema,
-  data: z.object({
-    action: z.enum(permissionActionsEnum.enumValues).optional(),
-    module: z.enum(permissionModulesEnum.enumValues).optional()
-  })
-});
-
-const deletePermissionSchema = z.object({
-  entity_id: uuidSchema
-});
 
 export const createAPermission = async (data: NewPermission, tx: DB) => {
   const [created] = await tx.insert(permission).values(data).returning();
@@ -52,17 +34,12 @@ export const deleteAPermission = async (id: string, tx: DB) => {
 };
 
 export const createAPermissionForMutation = async (
-  params: PermissionInput,
+  params: z.infer<typeof createPermissionSchema>,
   user: { user_id: string },
   tx: DB
 ) => {
-  const parsed = createPermissionSchema.safeParse(params);
-  if (!parsed.success) {
-    throw new CustomError(400, parsed.error.issues[0]?.message ?? 'VALIDATION_ERROR');
-  }
-
   const existing = await tx.query.permission.findFirst({
-    where: and(eq(permission.action, parsed.data.action), eq(permission.module, parsed.data.module))
+    where: and(eq(permission.action, params.action), eq(permission.module, params.module))
   });
   if (existing) {
     throw new CustomError(409, 'PERMISSION_ALREADY_EXISTS');
@@ -70,8 +47,8 @@ export const createAPermissionForMutation = async (
 
   return await createAPermission(
     {
-      action: parsed.data.action,
-      module: parsed.data.module,
+      action: params.action,
+      module: params.module,
       created_by: user.user_id
     },
     tx
@@ -79,16 +56,11 @@ export const createAPermissionForMutation = async (
 };
 
 export const updateAPermissionForMutation = async (
-  params: { entity_id: string; data: PermissionInput },
+  params: z.infer<typeof updatePermissionSchema>,
   _user: { user_id: string },
   tx: DB
 ) => {
-  const parsed = updatePermissionSchema.safeParse(params);
-  if (!parsed.success) {
-    throw new CustomError(400, parsed.error.issues[0]?.message ?? 'VALIDATION_ERROR');
-  }
-
-  const { entity_id, data } = parsed.data;
+  const { entity_id, data } = params;
 
   if (!data.action && !data.module) {
     throw new CustomError(400, 'NO_FIELDS_TO_UPDATE');
@@ -118,13 +90,4 @@ export const updateAPermissionForMutation = async (
   }
 
   return await updateAPermission(entity_id, updateData, tx);
-};
-
-export const deleteAPermissionForMutation = async (params: { entity_id: string }, tx: DB) => {
-  const parsed = deletePermissionSchema.safeParse(params);
-  if (!parsed.success) {
-    throw new CustomError(400, parsed.error.issues[0]?.message ?? 'VALIDATION_ERROR');
-  }
-
-  return await deleteAPermission(parsed.data.entity_id, tx);
 };

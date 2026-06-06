@@ -11,7 +11,6 @@ import type {
   RevokeTokenInput,
   VerifyTokenInput
 } from '@/src/modules/auth-token/auth-token.type';
-import { revokeAnAuthTokenSchema } from '@/src/modules/auth-token/auth-token.validation';
 import * as commonService from '@/src/modules/common/common.service';
 
 import type { DB } from '@/src/db';
@@ -132,11 +131,6 @@ export const refreshAuthTokensForUser = async (params: RefreshTokenInput, tx?: D
 };
 
 export const revokeAnAuthTokenForUser = async (params: RevokeTokenInput, tx?: DB) => {
-  const paramsParsed = revokeAnAuthTokenSchema.safeParse(params);
-  if (!paramsParsed.success) {
-    throw new CustomError(400, 'TOKEN_IS_INVALID');
-  }
-
   const { token, type } = params;
 
   const where =
@@ -162,7 +156,7 @@ export const revokeAnAuthTokenForUser = async (params: RevokeTokenInput, tx?: DB
   return { message: 'LOGGED_OUT', success: true };
 };
 
-export const revokeAuthTokensForUser = async (params: { user_id: string }, tx: DB = db) => {
+export const revokeAuthTokensForUser = async (params: { user_id: string }, tx: DB) => {
   const { user_id } = params;
 
   const foundUser = await tx.query.user.findFirst({

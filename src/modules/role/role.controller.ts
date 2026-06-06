@@ -5,6 +5,7 @@ import { CustomError } from '@/src/utils/error';
 import * as commonHelper from '@/src/modules/common/common.helper';
 import * as roleHelper from '@/src/modules/role/role.helper';
 import * as roleService from '@/src/modules/role/role.service';
+import { createRoleSchema, deleteRoleSchema, updateRoleSchema } from '@/src/modules/role/role.type';
 import type { AuthRequest } from '@/src/modules/user/user.type';
 
 import { useTransaction } from '@/src/db';
@@ -17,8 +18,13 @@ export const roleController = {
         throw new CustomError(401, 'UNAUTHORIZED');
       }
 
+      const parsed = createRoleSchema.safeParse(req.body);
+      if (!parsed.success) {
+        throw new CustomError(400, parsed.error.issues[0]?.message ?? 'VALIDATION_ERROR');
+      }
+
       const newRole = await useTransaction(async (tx) =>
-        roleService.createARoleForMutation(req.body, { user_id: userId }, tx)
+        roleService.createARoleForMutation(parsed.data, { user_id: userId }, tx)
       );
       res.status(201).json({ data: newRole });
     } catch (err) {
@@ -28,12 +34,16 @@ export const roleController = {
 
   updateARole: async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
+      const parsed = updateRoleSchema.safeParse({
+        entity_id: String(req.params.entity_id),
+        data: req.body
+      });
+      if (!parsed.success) {
+        throw new CustomError(400, parsed.error.issues[0]?.message ?? 'VALIDATION_ERROR');
+      }
+
       const updatedRole = await useTransaction(async (tx) =>
-        roleService.updateARoleForMutation(
-          { entity_id: String(req.params.entity_id), data: req.body },
-          { user_id: req.user?.id ?? '' },
-          tx
-        )
+        roleService.updateARoleForMutation(parsed.data, { user_id: req.user?.id ?? '' }, tx)
       );
       res.json({ data: updatedRole });
     } catch (err) {
@@ -43,13 +53,15 @@ export const roleController = {
 
   deleteARole: async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const parsed = deleteRoleSchema.safeParse({
+        entity_id: String(req.params.entity_id)
+      });
+      if (!parsed.success) {
+        throw new CustomError(400, parsed.error.issues[0]?.message ?? 'VALIDATION_ERROR');
+      }
+
       const deletedRole = await useTransaction(async (tx) =>
-        roleService.deleteARoleForMutation(
-          {
-            entity_id: String(req.params.entity_id)
-          },
-          tx
-        )
+        roleService.deleteARole(parsed.data.entity_id, tx)
       );
       res.json({ data: deletedRole });
     } catch (err) {

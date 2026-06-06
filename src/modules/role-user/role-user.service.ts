@@ -1,31 +1,21 @@
 import { and, eq, not } from 'drizzle-orm';
-import { z } from 'zod';
+import type { z } from 'zod';
 
 import { CustomError } from '@/src/utils/error';
 
-import { uuidSchema } from '@/src/modules/common/common.validation';
 import { role } from '@/src/modules/role/role.schema';
 import type { RoleName } from '@/src/modules/role/role.type';
 import { roleUser } from '@/src/modules/role-user/role-user.schema';
 import type {
   CreateRoleUserInput,
-  UpdateRoleUserInput
+  createRoleUserSchema,
+  UpdateRoleUserInput,
+  updateRoleUserSchema
 } from '@/src/modules/role-user/role-user.type';
 import { user } from '@/src/modules/user/user.schema';
 
 import type { DB } from '@/src/db';
 import { useTransaction } from '@/src/db';
-
-const createRoleUserSchema = z.object({
-  role_id: uuidSchema,
-  user_id: uuidSchema
-});
-
-const updateRoleUserSchema = z.object({
-  entity_id: uuidSchema,
-  role_id: uuidSchema.optional(),
-  user_id: uuidSchema.optional()
-});
 
 export const createARoleUser = async (data: CreateRoleUserInput) =>
   useTransaction(async (tx) => {
@@ -56,29 +46,26 @@ export const deleteARoleUser = async (id: string) =>
     return deleted;
   });
 
-export const createARoleUserForMutation = async (params: CreateRoleUserInput, tx: DB) => {
-  const parsed = createRoleUserSchema.safeParse(params);
-
-  if (!parsed.success) {
-    throw new CustomError(400, parsed.error.issues[0]?.message ?? 'VALIDATION_ERROR');
-  }
-
+export const createARoleUserForMutation = async (
+  params: z.infer<typeof createRoleUserSchema>,
+  tx: DB
+) => {
   const foundRole = await tx.query.role.findFirst({
-    where: eq(role.id, parsed.data.role_id)
+    where: eq(role.id, params.role_id)
   });
   if (!foundRole) {
     throw new CustomError(404, 'ROLE_DOES_NOT_EXIST');
   }
 
   const foundUser = await tx.query.user.findFirst({
-    where: eq(user.id, parsed.data.user_id)
+    where: eq(user.id, params.user_id)
   });
   if (!foundUser) {
     throw new CustomError(404, 'USER_DOES_NOT_EXIST');
   }
 
   const existing = await tx.query.roleUser.findFirst({
-    where: and(eq(roleUser.role_id, parsed.data.role_id), eq(roleUser.user_id, parsed.data.user_id))
+    where: and(eq(roleUser.role_id, params.role_id), eq(roleUser.user_id, params.user_id))
   });
   if (existing) {
     throw new CustomError(409, 'ROLE_USER_ALREADY_EXISTS');
@@ -87,8 +74,8 @@ export const createARoleUserForMutation = async (params: CreateRoleUserInput, tx
   const [created] = await tx
     .insert(roleUser)
     .values({
-      role_id: parsed.data.role_id,
-      user_id: parsed.data.user_id
+      role_id: params.role_id,
+      user_id: params.user_id
     })
     .returning();
 
@@ -100,16 +87,10 @@ export const createARoleUserForMutation = async (params: CreateRoleUserInput, tx
 };
 
 export const updateARoleUserForMutation = async (
-  params: { entity_id: string; role_id?: string; user_id?: string },
+  params: z.infer<typeof updateRoleUserSchema>,
   tx: DB
 ) => {
-  const parsed = updateRoleUserSchema.safeParse(params);
-
-  if (!parsed.success) {
-    throw new CustomError(400, parsed.error.issues[0]?.message ?? 'VALIDATION_ERROR');
-  }
-
-  const { entity_id, ...data } = parsed.data;
+  const { entity_id, ...data } = params;
 
   if (data.role_id === undefined && data.user_id === undefined) {
     throw new CustomError(400, 'NO_FIELDS_TO_UPDATE');

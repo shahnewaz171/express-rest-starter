@@ -1,4 +1,7 @@
-import type { roleNameEnum } from '@/src/modules/role/role.schema';
+import z from 'zod';
+
+import { uuidSchema } from '@/src/modules/common/common.validation';
+import { roleNameEnum } from '@/src/modules/role/role.schema';
 
 export type RoleName = (typeof roleNameEnum.enumValues)[number];
 
@@ -15,3 +18,19 @@ export interface RoleQueryParams {
   include_entity_ids?: string[];
   names?: RoleName[];
 }
+
+// ZOD
+export const createRoleSchema = z.object({
+  name: z.enum(roleNameEnum.enumValues)
+});
+
+export const updateRoleSchema = z.object({
+  entity_id: uuidSchema,
+  data: z.object({
+    name: z.enum(roleNameEnum.enumValues).optional()
+  })
+});
+
+export const deleteRoleSchema = z.object({
+  entity_id: uuidSchema
+});

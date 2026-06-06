@@ -5,6 +5,11 @@ import { CustomError } from '@/src/utils/error';
 import * as commonHelper from '@/src/modules/common/common.helper';
 import * as permissionHelper from '@/src/modules/permission/permission.helper';
 import * as permissionService from '@/src/modules/permission/permission.service';
+import {
+  createPermissionSchema,
+  deletePermissionSchema,
+  updatePermissionSchema
+} from '@/src/modules/permission/permission.type';
 import type { AuthRequest } from '@/src/modules/user/user.type';
 
 import { useTransaction } from '@/src/db';
@@ -16,14 +21,14 @@ export const permissionController = {
       if (!userId) {
         throw new CustomError(401, 'UNAUTHORIZED');
       }
+
+      const parsed = createPermissionSchema.safeParse(req.body);
+      if (!parsed.success) {
+        throw new CustomError(400, parsed.error.issues[0]?.message ?? 'VALIDATION_ERROR');
+      }
+
       const newPermission = await useTransaction(async (tx) =>
-        permissionService.createAPermissionForMutation(
-          req.body,
-          {
-            user_id: userId
-          },
-          tx
-        )
+        permissionService.createAPermissionForMutation(parsed.data, { user_id: userId }, tx)
       );
       res.status(201).json({ data: newPermission });
     } catch (err) {
@@ -33,9 +38,17 @@ export const permissionController = {
 
   updateAPermission: async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
+      const parsed = updatePermissionSchema.safeParse({
+        entity_id: String(req.params.entity_id),
+        data: req.body
+      });
+      if (!parsed.success) {
+        throw new CustomError(400, parsed.error.issues[0]?.message ?? 'VALIDATION_ERROR');
+      }
+
       const updatedPermission = await useTransaction(async (tx) =>
         permissionService.updateAPermissionForMutation(
-          { entity_id: String(req.params.entity_id), data: req.body },
+          parsed.data,
           { user_id: req.user?.id ?? '' },
           tx
         )
@@ -48,13 +61,15 @@ export const permissionController = {
 
   deleteAPermission: async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const parsed = deletePermissionSchema.safeParse({
+        entity_id: String(req.params.entity_id)
+      });
+      if (!parsed.success) {
+        throw new CustomError(400, parsed.error.issues[0]?.message ?? 'VALIDATION_ERROR');
+      }
+
       const deletedPermission = await useTransaction(async (tx) =>
-        permissionService.deleteAPermissionForMutation(
-          {
-            entity_id: String(req.params.entity_id)
-          },
-          tx
-        )
+        permissionService.deleteAPermission(parsed.data.entity_id, tx)
       );
       res.json({ data: deletedPermission });
     } catch (err) {
