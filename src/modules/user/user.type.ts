@@ -37,8 +37,10 @@ export interface GetUsersParams {
 }
 
 export interface PermissionsOfARole {
+  id?: string;
   action: string;
   can_do_the_action: boolean;
+  module?: string;
 }
 
 export interface AuthRequest extends Request {

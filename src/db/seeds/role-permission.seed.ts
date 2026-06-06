@@ -1,10 +1,15 @@
-import isEmpty from 'lodash/isEmpty';
-
 import { permission } from '@/src/modules/permission/permission.schema';
 import { rolePermission } from '@/src/modules/role-permission/role-permission.schema';
 
 import type { DB } from '@/src/db';
 import { role } from '@/src/db/schema';
+
+/*
+  - We use an implicit-deny approach here — only allowed actions are stored.
+  - If `can_do_the_action: true` exists, the action is allowed.
+  - If there’s no record, access is denied by default.
+  - This keeps things simple and avoids exposing internal or protected module rules to consumers.
+*/
 
 const protectedModules = new Set(['user', 'role']);
 
@@ -34,7 +39,7 @@ export default async function seedRolePermission(tx: DB) {
     }
   }
 
-  if (isEmpty(rolePermissions)) {
+  if (rolePermissions.length === 0) {
     console.warn('No role permissions to insert, skipping seed');
     return;
   }

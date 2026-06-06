@@ -8,7 +8,7 @@ export default async function seedAuthTemplate(db: DB) {
     .values([
       {
         event: 'send_user_verification_token',
-        body: '<p>Welcome, {{username}}! Verify your email with this OTP: <strong>{{token}}</strong>.</p>',
+        body: '<p>Welcome, {{username}}! Verify your email with this OTP: <strong>{{token}}</strong></p>',
         subject: 'Verify Your Email'
       },
       {

@@ -1,6 +1,5 @@
 import { and, eq, ilike, inArray, not, or, type SQL, sql } from 'drizzle-orm';
 import find from 'lodash/find';
-import isEmpty from 'lodash/isEmpty';
 import join from 'lodash/join';
 import map from 'lodash/map';
 
@@ -138,7 +137,7 @@ export const getAuthUserWithRolesAndPermissions = async (params: {
     throw new Error('INVALID_USER_ID');
   }
 
-  if (isEmpty(roles)) {
+  if (roles.length === 0) {
     throw new Error('USER_HAS_NO_ROLE');
   }
 
@@ -191,8 +190,10 @@ export const getAuthUserWithRolesAndPermissions = async (params: {
       }
 
       permissions[module].push({
+        id: permission.id,
         action: permission.action,
-        can_do_the_action: rp.can_do_the_action
+        can_do_the_action: rp.can_do_the_action,
+        module: permission.module
       });
     }
   }
@@ -221,7 +222,7 @@ export const getUsernameByNames = (
 ) => {
   const parts = [first_name, last_name].filter(Boolean);
 
-  if (isEmpty(parts)) {
+  if (parts.length === 0) {
     return email;
   }
 

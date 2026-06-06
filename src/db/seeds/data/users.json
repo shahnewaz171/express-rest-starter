@@ -1,22 +1,22 @@
 [
   {
     "email": "newaz-rest-one@yopmail.com",
-    "first_name": "Admin",
-    "last_name": "Root",
+    "first_name": "Newaz",
+    "last_name": "One",
     "roles": [{ "name": "admin" }, { "name": "moderator" }, { "name": "user" }],
     "status": "active"
   },
   {
     "email": "newaz-rest-two@yopmail.com",
-    "first_name": "John",
-    "last_name": "Doe",
+    "first_name": "Newaz",
+    "last_name": "Two",
     "roles": [{ "name": "developer" }, { "name": "user" }],
     "status": "active"
   },
   {
     "email": "newaz-rest-three@yopmail.com",
-    "first_name": "Jane",
-    "last_name": "Smith",
+    "first_name": "Newaz",
+    "last_name": "Three",
     "roles": [{ "name": "user" }],
     "status": "active"
   }
