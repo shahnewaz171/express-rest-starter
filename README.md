@@ -7,66 +7,63 @@
 ![Postgres](https://img.shields.io/badge/Postgres-17-blue?logo=postgresql)
 ![Drizzle](https://img.shields.io/badge/Drizzle_ORM-0.45-orange?logo=drizzle)
 
-A boilerplate setup for running an **Express.js** backend with **PostgreSQL** using Drizzle ORM.
-This repository provides a production-ready REST API with JWT authentication, RBAC, and email notifications for rapid SaaS development.
+A production-ready **Express.js** REST API with **PostgreSQL**, JWT authentication, RBAC, and email notifications — built for rapid SaaS development.
 
 ---
 
-## 🚀 Core Features
+## Core features
 
 - Express 5 REST API with ESM
 - JWT authentication with refresh token rotation
 - Role-based access control (RBAC) with granular permissions
-- PostgreSQL with Drizzle ORM migrations & seeding
+- PostgreSQL with Drizzle ORM migrations and seeding
 - Zod validation for all request payloads
-- Swagger/OpenAPI documentation
-- Email templating with Handlebars & Nodemailer
+- OpenAPI 3.1 documentation (Scalar UI + JSON spec)
+- Email templating with Handlebars and AWS SES
 - Secure password hashing with bcrypt
-- Request logging and error handling
+- Request logging and centralized error handling
 
 ---
 
-## 📂 Project Structure
+## Project structure
 
 ```
-express-rest-starter/
-└───src/
-   ├───server.ts
-   ├───db/
-   │   ├───index.ts
-   │   ├───migrate.ts
-   │   ├───schema.ts
-   │   ├───seed.ts
-   │   └───seeds/
-   │       └───**.seed.ts
-   ├───lib/
-   │   └───index.ts
-   ├───middlewares/
-   │   ├───authorizer.ts
-   │   └───error.ts
-   ├───modules/
-   │   ├───controllers.ts
-   │   ├───helpers.ts
-   │   ├───routers.ts
-   │   ├───services.ts
-   │   ├───**/
-   │   │   ├───**.controller.ts
-   │   │   ├───**.helper.ts
-   │   │   ├───**.router.ts
-   │   │   ├───**.schema.ts
-   │   │   ├───**.service.ts
-   │   │   └───**.type.ts
-   ├───routes/
-   │   └───index.ts
-   └───utils/
-      ├───env.ts
-      └───error/
-         └───index.ts
+express-auth/
+├── docs/                          # OpenAPI documentation layer
+│   ├── helpers/                   # Shared doc helpers (error responses, security)
+│   ├── routes/                    # Route registrars for OpenAPI paths
+│   ├── schemas/
+│   │   ├── common.ts              # api* primitive schemas
+│   │   ├── entities.ts            # api* response entity schemas
+│   │   ├── responses.ts           # api* success/error wrappers
+│   │   └── requests/              # api* request/query schemas per module
+│   ├── openapi.ts                 # Generates the OpenAPI document
+│   ├── registry.ts                # OpenAPIRegistry singleton
+│   └── scalar.ts                  # Scalar UI + /openapi.json route
+├── src/
+│   ├── bootstrap/
+│   │   └── zod-extend.ts          # Extends Zod with .openapi()
+│   ├── db/                        # Drizzle schema, migrations, seeds
+│   ├── middlewares/               # authorizer, error handler
+│   ├── modules/                   # Feature modules (controller, router, service, …)
+│   │   ├── common/                # Shared validation and helpers
+│   │   ├── user/                  # Auth and user management
+│   │   ├── role/
+│   │   ├── permission/
+│   │   ├── role-user/
+│   │   ├── role-permission/
+│   │   ├── auth-token/
+│   │   └── …
+│   ├── routes/index.ts            # Mounts all routers
+│   ├── server.ts
+│   └── utils/env.ts
+├── AUTH.md                        # Auth endpoints, tokens, test plan
+└── AGENTS.md                      # Agent/coding conventions
 ```
 
 ---
 
-## ⚙️ Setup
+## Setup
 
 ### 1. Clone the repository
 
@@ -83,11 +80,13 @@ pnpm install
 
 ### 3. Configure environment variables
 
-Copy the `.env.example` file into `.env` and customize as per need:
+Copy `.env.example` to `.env` and fill in the values:
 
 ```bash
 cp .env.example .env
 ```
+
+Required variables include `DATABASE_URL`, `JWT_SECRET`, `JWT_ISSUER`, `API_BASE_URL`, `CLIENT_APP_URL`, `FROM_EMAIL`, and AWS SES credentials. See `.env.example` for the full list.
 
 ### 4. Run database migrations
 
@@ -101,7 +100,7 @@ pnpm run db:migrate
 pnpm run db:seed
 ```
 
-### 6. Start development server
+### 6. Start the development server
 
 ```bash
 pnpm run dev
@@ -109,7 +108,7 @@ pnpm run dev
 
 ---
 
-## 🌐 Access
+## Access
 
 - **Express API** → `http://localhost:8000`
 - **PostgreSQL** → `localhost:5432`
@@ -154,6 +153,8 @@ pnpm run dev
   pnpm run db:studio
   ```
 
+Docker Compose scripts (`compose:dev`, `compose:prod`, etc.) are also available — see `package.json`.
+
 ---
 
-👋 Created by **Muhammad Shahnewaz**. If you find this useful, ⭐ the repo or reach out!
+Created by **Muhammad Shahnewaz**. If you find this useful, star the repo or reach out.

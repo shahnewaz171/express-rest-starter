@@ -7,6 +7,9 @@ All routes below are mounted under the `/auth` prefix (`src/routes/index.ts` →
 `router.use('/auth', userRouter)`). There is no global `/api` prefix; the router is
 mounted at the app root in `src/server.ts`.
 
+Interactive API docs for all auth endpoints are available at `/docs` (Scalar UI) and
+`/docs/openapi.json` (OpenAPI 3.1 spec).
+
 ---
 
 ## 1. Endpoint reference
@@ -18,7 +21,7 @@ mounted at the app root in `src/server.ts`.
 | POST   | `/auth/resend-verification-email` | Public          | Re-issue verification OTP                          |
 | POST   | `/auth/login`                     | Public          | Authenticate, issue access + refresh tokens        |
 | POST   | `/auth/refresh-token`             | Public          | Exchange refresh token for new tokens              |
-| GET    | `/auth/me`                        | Bearer          | Return the authenticated user                      |
+| GET    | `/auth/user`                      | Bearer          | Return the authenticated user                      |
 | POST   | `/auth/logout`                    | Bearer          | Revoke the current access token                    |
 | POST   | `/auth/change-email`              | Bearer          | Request email change (OTP to new address)          |
 | POST   | `/auth/cancel-change-email`       | Bearer          | Cancel a pending email change                      |
@@ -38,12 +41,19 @@ Authorization is enforced by `authorizer(roles?)` (`src/middlewares/authorizer.t
 which validates the bearer JWT **and** confirms the token still exists in the
 `auth_token` table (so revoked/logged-out tokens are rejected even before expiry).
 
+RBAC management (roles, permissions, assignments) lives under `/roles`, `/permissions`,
+`/role-users`, and `/role-permissions` — documented in the Scalar UI at `/docs`.
+
 ---
 
 ## 2. Request bodies
 
-Validation is done with Zod (`src/modules/user/user.validation.ts`,
-`src/modules/auth-token/auth-token.validation.ts`).
+Runtime validation uses Zod schemas in `src/modules/user/user.validation.ts` and
+`src/modules/auth-token/auth-token.validation.ts`.
+
+OpenAPI request schemas live in `docs/schemas/requests/` with an `api` prefix
+(e.g. `apiRegisterSchema`, `apiLoginSchema`) and mirror the shapes below. Docs schemas
+may omit fields that come from auth context (such as `user_id` on self-service endpoints).
 
 ```jsonc
 // POST /auth/register
@@ -102,6 +112,9 @@ error handler. Internal error details are never leaked to clients. Common codes:
 `400` (validation/invalid input), `401` (`UNAUTHORIZED` / `MISSING_TOKEN`),
 `404` (`USER_DOES_NOT_EXIST`), `409`/`400` (duplicate email), `500` (`UNKNOWN_ERROR`).
 
+The OpenAPI error response schema is `apiErrorResponseSchema` in `docs/schemas/responses.ts`
+(component ref: `ApiErrorResponse`).
+
 ---
 
 ## 4. Token model
@@ -159,10 +172,10 @@ immediately.
    - `POST /auth/register` → expect `201`, user created.
    - Read the OTP, `POST /auth/verify-user-email` → `200`.
    - `POST /auth/login` → `200` with access + refresh tokens.
-2. **Authenticated read** — `GET /auth/me` with the access token → `200`, correct user.
+2. **Authenticated read** — `GET /auth/user` with the access token → `200`, correct user.
 3. **Refresh** — `POST /auth/refresh-token` with the refresh token → `200`, new pair;
    confirm the old access token is rejected if rotated.
-4. **Logout** — `POST /auth/logout` → `200`; reusing that access token on `/auth/me`
+4. **Logout** — `POST /auth/logout` → `200`; reusing that access token on `/auth/user`
    must now return `401`.
 5. **Change password** — `POST /auth/change-password` → `200`; old password fails login,
    new password succeeds.

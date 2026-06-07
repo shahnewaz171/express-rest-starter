@@ -62,11 +62,10 @@
 - Add indexes for frequently queried fields
 - Prevent N+1 query problems and others query problems like this.
 
-## Swagger
-- Use swagger for API documentation
-- Keep swagger documentation updated with route changes
-- Keep swagger schemas consistent with TypeScript and validation schemas
-- Avoid duplicated schema definitions
+## OpenAPI documentation
+- API docs live in `docs/`
+- Keep OpenAPI documentation updated with route changes
+- Avoid duplicated schema definitions; prefer wrapping service schemas in the docs layer
 
 ## Security
 - Sanitize all user input
