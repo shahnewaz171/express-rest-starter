@@ -2,6 +2,8 @@ import http from 'node:http';
 import cors from 'cors';
 import express from 'express';
 
+import '@/src/bootstrap/zod-extend';
+
 import env from '@/src/utils/env';
 
 // Middlewares
@@ -18,11 +20,6 @@ const app = express();
 
 // Using CORS for cross site origin issue
 app.use(cors({ origin: '*' }));
-// app.use((_req, res, next) => {
-//   res.setHeader('Access-Control-Allow-Headers', '*');
-//   res.setHeader('Access-Control-Allow-Methods', '*');
-//   next();
-// });
 
 // Using JSON for parsing request body
 app.use(express.json());

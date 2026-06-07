@@ -25,12 +25,14 @@ export const createPermissionSchema = z.object({
   module: z.enum(permissionModulesEnum.enumValues)
 });
 
+export const updatePermissionBodySchema = z.object({
+  action: z.enum(permissionActionsEnum.enumValues).optional(),
+  module: z.enum(permissionModulesEnum.enumValues).optional()
+});
+
 export const updatePermissionSchema = z.object({
   entity_id: uuidSchema,
-  data: z.object({
-    action: z.enum(permissionActionsEnum.enumValues).optional(),
-    module: z.enum(permissionModulesEnum.enumValues).optional()
-  })
+  data: updatePermissionBodySchema
 });
 
 export const deletePermissionSchema = z.object({

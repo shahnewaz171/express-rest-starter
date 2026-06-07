@@ -10,6 +10,7 @@ const stringBoolean = z.coerce
 
 const EnvSchema = z.object({
   NODE_ENV: z.string().default('development'),
+  API_BASE_URL: z.url({ message: 'API_BASE_URL is invalid' }),
   PORT: z.string().default('8000'),
   DATABASE_URL: z.string().min(1, 'DATABASE URL is required'),
   DB_MIGRATING: stringBoolean,
@@ -18,7 +19,7 @@ const EnvSchema = z.object({
   JWT_ISSUER: z.string().min(1, 'JWT_ISSUER is required'),
   ACCESS_TOKEN_EXPIRY: z.string().default('1d'),
   REFRESH_TOKEN_EXPIRY: z.string().default('30d'),
-  CLIENT_APP_URL: z.string().min(1, 'CLIENT_APP_URL is required'),
+  CLIENT_APP_URL: z.url({ message: 'CLIENT_APP_URL is invalid' }),
   FROM_EMAIL: z.string().min(1, 'FROM_EMAIL is required'),
   AWS_ACCESS_KEY: z.string().min(1, 'AWS_ACCESS_KEY is required'),
   AWS_SECRET_KEY: z.string().min(1, 'AWS_SECRET_KEY is required'),

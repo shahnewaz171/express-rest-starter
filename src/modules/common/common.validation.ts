@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const emailSchema = z.email().toLowerCase();
+
 export const passwordSchema = z
   .string()
   .min(8)
@@ -8,6 +9,7 @@ export const passwordSchema = z
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%&*(){}[\]])/,
     'Password must contain at least 1 lowercase, 1 uppercase, 1 number, and 1 special character'
   );
+
 export const uuidSchema = z.uuid();
 
 export const paginationSchema = z.object({
