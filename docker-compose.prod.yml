@@ -42,7 +42,7 @@ services:
     env_file:
       - .env
     ports:
-      - "${PORT}:${PORT}"
+      - "${PG_PORT}:${PG_PORT}"
     environment:
       POSTGRES_USER: ${PG_USER}
       POSTGRES_PASSWORD: ${PG_PASSWORD}
