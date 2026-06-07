@@ -157,4 +157,35 @@ Docker Compose scripts (`compose:dev`, `compose:prod`, etc.) are also available 
 
 ---
 
+## Docker deployment modes
+
+- `compose:dev`:
+  - Uses `Dockerfile.Dev`
+  - Runs app + local Postgres in Docker
+  - App connects to `postgres` service internally
+
+- `compose:prod`:
+  - Uses `Dockerfile.Prod`
+  - Runs only the app container
+  - Expects external database via env vars (`DATABASE_URL` or `PG_HOST` + related vars), e.g. AWS RDS
+
+### Recommended production env defaults
+
+- `NODE_ENV=production`
+- `DB_MIGRATING=false`
+- `DB_SEEDING=false`
+- `PG_HOST=<external-db-host>` (if composing `DATABASE_URL` from PG vars)
+- `DATABASE_URL=<external-db-connection-string>`
+
+### What else is needed for full production dockerization
+
+- Container image publishing pipeline (build + tag + push to registry)
+- Secret management (do not keep production `.env` in repo)
+- Zero-downtime migration strategy (separate migration job/container)
+- Reverse proxy / load balancer with TLS termination
+- Externalized logs/metrics/traces (not only json-file logs)
+- Health and restart monitoring at orchestration layer
+
+---
+
 Created by **Muhammad Shahnewaz**. If you find this useful, star the repo or reach out.
