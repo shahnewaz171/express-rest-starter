@@ -2,13 +2,15 @@ FROM node:22-slim
 
 LABEL org.opencontainers.image.authors="Muhammad Shahnewaz"
 
+# pnpm setup (pinned for CI stability)
+RUN corepack enable && corepack prepare pnpm@10.13.1 --activate
 
 WORKDIR /app
 
-# pnpm setup (pinned for CI stability)
-RUN corepack enable && corepack prepare pnpm@10.11.0 --activate
+# prevent husky / git hook failures in Docker
+ENV HUSKY=0
 
-# dependency layer
+# dependency layer (cached)
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 

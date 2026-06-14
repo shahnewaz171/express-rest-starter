@@ -1,9 +1,12 @@
+# Use Node.js LTS as base image
 FROM node:22-slim
 
 LABEL org.opencontainers.image.authors="Muhammad Shahnewaz"
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# pnpm setup (pinned for CI stability)
+RUN corepack enable && corepack prepare pnpm@10.13.1 --activate
 
+# Set working directory
 WORKDIR /app
 
 # prevent husky / git hook failures in Docker
@@ -13,9 +16,11 @@ ENV HUSKY=0
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --ignore-scripts
 
-# source layer
+# Copy the rest of the application files
 COPY . .
 
+# Expose the port the backend runs on
 EXPOSE 8000
 
+# Start the backend server
 CMD ["pnpm", "dev"]

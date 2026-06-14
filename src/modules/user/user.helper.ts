@@ -7,7 +7,7 @@ import * as commonHelper from '@/src/modules/common/common.helper';
 import * as roleHelper from '@/src/modules/role/role.helper';
 import type { RoleName } from '@/src/modules/role/role.type';
 import { user } from '@/src/modules/user/user.schema';
-import type { PermissionsOfARole, UserQueryParams } from '@/src/modules/user/user.type';
+import type { UserQueryParams } from '@/src/modules/user/user.type';
 
 import type { DB } from '@/src/db';
 import { db } from '@/src/db';
@@ -175,7 +175,7 @@ export const getAuthUserWithRolesAndPermissions = async (params: {
   const userRoles = map(userResult.role_users, (ru) => ru.role?.name).filter(Boolean) as RoleName[];
   const topRole = roleHelper.getTopRoleOfAUser(userRoles);
 
-  const permissions: Record<string, PermissionsOfARole[]> = {};
+  const permissions: Record<string, string[]> = {};
   const topRolePermissions =
     find(userResult.role_users, (ru) => ru.role?.name === topRole)?.role?.role_permissions || [];
 
@@ -189,12 +189,14 @@ export const getAuthUserWithRolesAndPermissions = async (params: {
         permissions[module] = [];
       }
 
-      permissions[module].push({
-        id: permission.id,
-        action: permission.action,
-        can_do_the_action: rp.can_do_the_action,
-        module: permission.module
-      });
+      permissions[module].push(permission.action);
+
+      // permissions[module].push({
+      //   id: permission.id,
+      //   action: permission.action,
+      //   can_do_the_action: rp.can_do_the_action,
+      //   module: permission.module
+      // });
     }
   }
 

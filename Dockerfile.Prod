@@ -5,7 +5,8 @@ FROM node:22-slim AS builder
 
 LABEL org.opencontainers.image.authors="Muhammad Shahnewaz"
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# pnpm setup (pinned for CI stability)
+RUN corepack enable && corepack prepare pnpm@10.13.1 --activate
 
 WORKDIR /app
 
@@ -23,13 +24,15 @@ COPY . .
 RUN pnpm build
 
 # install production dependencies for copying to runner
-RUN pnpm install --frozen-lockfile --prod
+RUN pnpm prune --prod --ignore-scripts
 
 
 # ============================================================
 # Stage 2: Production runtime
 # ============================================================
 FROM node:22-slim AS runner
+
+LABEL org.opencontainers.image.authors="Muhammad Shahnewaz"
 
 WORKDIR /app
 
@@ -41,6 +44,7 @@ COPY --from=builder /app/node_modules ./node_modules
 
 # copy compiled output
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package.json ./package.json
 
 # security: run as non-root user and change root ownership of the app directory
 RUN groupadd -r appgroup && useradd -r -g appgroup appuser
