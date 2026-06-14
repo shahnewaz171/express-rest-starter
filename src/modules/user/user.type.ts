@@ -57,7 +57,7 @@ export interface AuthRequest extends Request {
         last_login_at: Date | null;
         roles: string[];
         role: string | null;
-        permissions: Record<string, PermissionsOfARole[]>;
+        permissions: Record<string, string[]>;
         user_id: string;
       }
     | null
